@@ -54,7 +54,7 @@ def single_neuron_model(
 # Function to run n independent simulations
 def run_multiple_neurons(
     n_runs=5,
-    time_span=(0, 300),
+    time_span=(0, 2000),
     time_points=4000,
     noise_std=1.0
 ):
@@ -83,7 +83,7 @@ def run_multiple_neurons(
         scaling_factor = 0.1
     )
 
-    t_eval = np.linspace(time_span[0], time_span[1], time_points)
+    t_eval = np.linspace(time_span[1]-200, time_span[1], time_points)
     plt.figure(figsize=(12, 6))
 
     for run in range(n_runs):
