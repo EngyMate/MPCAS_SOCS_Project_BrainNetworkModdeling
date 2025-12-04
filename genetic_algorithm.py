@@ -1,6 +1,10 @@
 import random
 import math
 
+import numpy as np
+
+import data_management as dm
+import nonLinear_model as nlm
 
 number_of_genes = 22
 creep_rate = 0.05
@@ -97,14 +101,19 @@ def decode_chromosome(chromosome, maximum_variable_value):
 
 # Evaluate indviduals:
 def evaluate_individual(x):
-  #g(x1, x2) = (1.5 − x1 + x1x2)2 + (2.25 − x1 + x1x22)2 + (2.625 − x1 + x1x32)2
-  x1 = x[0]
-  x2 = x[1]
-  g_x = pow((1.5 - x1 + x1*x2), 2)  \
-  + pow((2.25 - x1 + x1*pow(x2,2)),2) \
-  + pow((2.625 - x1 + x1*pow(x2, 3)),2)
+  files = dm.count_files_in_folder()
+  cost = 0
 
-  fitness = pow(g_x+1, -1)
+  for i in range(files["fMRI"]):
+    DTI_data = dm.load_DTI_data(i)
+    sim_fMRI = nlm.non_linear_bold_z_model(params=x, connectome_matrix=DTI_data, out_length=4800,time_span =(0, 500), time_steps = 6000)
+
+    fMRI_data = dm.load_fMRI_data(i)
+
+    cost += np.sum(np.pow(fMRI_data - sim_fMRI, 2))
+
+  fitness = 1 / cost
+
   return fitness
 
 # Select individuals:

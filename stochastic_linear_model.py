@@ -49,7 +49,7 @@ def find_best_alpha_beta(C, FC_true, alpha_range, beta_range, n_steps=1000, nois
     for alpha, beta in product(alpha_range, beta_range):
         u = simulate_linear_model(C, alpha, beta, n_steps=n_steps, noise_std=noise_std)
         FC_sim = compute_functional_connectivity(u)
-        error = np.sum(np.abs(FC_sim - FC_true))  # L1 error
+        error = np.sum(np.power(FC_sim - FC_true, 2))
 
         if error < best_error:
             best_error = error

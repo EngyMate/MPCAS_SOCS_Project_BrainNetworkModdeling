@@ -107,7 +107,7 @@ params = dict(
     C_intercolumn_coupling = 0.3
 )
 
-def non_linear_model(params, connectome_matrix=None, plot=False):
+def non_linear_model(params, out_length=100,time_span = (0, 500),time_steps = 6000, connectome_matrix=None , plot=False):
     # --- Parameters ---
 
     if connectome_matrix is None:
@@ -125,8 +125,8 @@ def non_linear_model(params, connectome_matrix=None, plot=False):
     initial_state = np.tile([-71.0, 0, W_i_initial], (num_neuronal_nodes, 1)).flatten() + np.random.normal(0, 1.0, 3*num_neuronal_nodes)
 
     # --- Simulation ---
-    time_span = (0, 500)
-    t_eval = np.linspace(time_span[0], time_span[1], 5000)
+
+    t_eval = np.linspace(time_span[0], time_span[1], time_steps)
 
     solution = solve_ivp(
         lambda t, y: coupled_neurons_diffusive_loop(
@@ -179,7 +179,7 @@ def non_linear_model(params, connectome_matrix=None, plot=False):
         plt.grid()
         plt.show()
 
-    return V_i_membrane_potential_exc, Z_i_membrane_potential_inh, W_i_open_K_fraction, t_eval
+    return V_i_membrane_potential_exc[-out_length:], Z_i_membrane_potential_inh[-out_length:], W_i_open_K_fraction[-out_length:], t_eval[-out_length:]
 
 
 from scipy.signal import convolve
@@ -195,8 +195,8 @@ def spm_hrf(time):
     return hrf
 
 
-def non_linear_bold_z_model(params, connectome_matrix):
-    V_i, Z_i, W_i, t_eval = non_linear_model(params,connectome_matrix, plot=False)
+def non_linear_bold_z_model(params, connectome_matrix, out_length=100,time_span = (0, 500),time_steps = 6000):
+    V_i, Z_i, W_i, t_eval = non_linear_model(params,out_length,time_span,time_steps,connectome_matrix, plot=False)
 
     # Convert to firing rate
     Q_i = 0.5 * params["Q_max_excitatory_firing_rate"] * (1 + np.tanh((V_i - (-70)) / 1.0))

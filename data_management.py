@@ -31,8 +31,6 @@ def load_excel_to_numpy(file_path, sheet_name=0):
 
     return matrix
 
-
-
 def list_files_in_folder(folder_path):
     """
     Returns a list of all files in a folder (excluding subfolders).
@@ -86,7 +84,6 @@ def load_mixed_excel(file_path, sheet_name=0):
     data = df.values.tolist()
 
     return data
-
 
 def load_fMRI_data(file_nr):
     files = list_files_in_folder(PATH_fMRI_data.format(""))
