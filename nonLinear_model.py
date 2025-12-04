@@ -107,7 +107,7 @@ params = dict(
     C_intercolumn_coupling = 0.3
 )
 
-def non_linear_model(params, num_neuronal_nodes=4, connectome_matrix=None, plot=False):
+def non_linear_model(params, connectome_matrix=None, plot=False):
     # --- Parameters ---
 
     if connectome_matrix is None:
@@ -117,7 +117,8 @@ def non_linear_model(params, num_neuronal_nodes=4, connectome_matrix=None, plot=
             [0.0, 0.1, 0.0, 1.0],
             [0.2, 0.0, 1.0, 0.0]
         ])
-        num_neuronal_nodes = 4
+
+    num_neuronal_nodes = connectome_matrix.shape[0]
 
     W_i_initial = 0.5 * (1 + np.tanh((-71 - params["V_K_Nernst_potential_K"]) / params["T_ion_variance_channel_sigmoid"]))
     # --- Initial conditions with larger random differences ---
@@ -186,7 +187,6 @@ from scipy.stats import gamma
 
 # HRF (SPM-like double gamma)
 def spm_hrf(time):
-
     # parameters for the canonical HRF
     peak1 = gamma.pdf(time, 6)
     peak2 = gamma.pdf(time, 16)
@@ -194,6 +194,25 @@ def spm_hrf(time):
     hrf /= np.sum(hrf)  # normalize area
     return hrf
 
+
+def non_linear_bold_z_model(params, connectome_matrix):
+    V_i, Z_i, W_i, t_eval = non_linear_model(params,connectome_matrix, plot=False)
+
+    # Convert to firing rate
+    Q_i = 0.5 * params["Q_max_excitatory_firing_rate"] * (1 + np.tanh((V_i - (-70)) / 1.0))
+
+    # HRF
+    hrf = spm_hrf(t_eval)  # TR = 1s
+
+    # Convolve each neuron/population
+    BOLD_all = np.array([np.convolve(neuron, hrf)[:neuron.shape[0]] for neuron in Q_i])
+    BOLD_z_all = []
+
+    for BOLD in BOLD_all:
+        BOLD_z = (BOLD - np.mean(BOLD, axis=0)) / np.std(BOLD, axis=0)
+        BOLD_z_all.append(BOLD_z)
+
+    return BOLD_z_all
 
 if __name__ == "__main__":
     V_i, Z_i, W_i, t_eval = non_linear_model(params, plot=False)
