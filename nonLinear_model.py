@@ -212,7 +212,7 @@ def non_linear_bold_z_model(params, connectome_matrix, out_length=100,time_span 
         BOLD_z = (BOLD - np.mean(BOLD, axis=0)) / np.std(BOLD, axis=0)
         BOLD_z_all.append(BOLD_z)
 
-    return BOLD_z_all
+    return np.array(BOLD_z_all)
 
 if __name__ == "__main__":
     V_i, Z_i, W_i, t_eval = non_linear_model(params, plot=False)

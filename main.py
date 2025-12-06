@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     # ==== STOCHASTIC LINEAR MODEL ====
     print("==== STOCHASTIC LINEAR MODEL ====")
-    best_alpha, best_beta, best_slm_sim, best_error_slm = slm.find_best_alpha_beta(DTI_1, fMRI_1, alpha_range, beta_range, n_steps=4800)
+
     u_t_slm = slm.simulate_linear_model(DTI_1, best_alpha, best_beta, n_steps=4800)
 
     # ==== DIFFUSION MODEL ====
@@ -82,8 +82,9 @@ if __name__ == "__main__":
     beta_range_dfm = np.arange(0, 6, 0.1)
     times = np.arange(0, 500, 500/4800)
 
-    best_beta_dfm, best_error_dfm, best_sim_dfm = dfm.compute_best_beta(DTI_1, fMRI_1, beta_range_dfm, times)
-    sim_dfm = dfm.nodewise_diffusion_timeseries(DTI_1, best_beta_dfm, times)
+    best_beta_dfm, best_error_dfm, best_sim_dfm = dfm.compute_best_beta_fast(DTI_1, fMRI_1, beta_range_dfm, times)
+    evals, evecs= dfm.prepare_laplacian_eigendecomposition(DTI_1)
+    sim_dfm = dfm.nodewise_diffusion_timeseries_fast(evals, evecs, best_beta_dfm, times)
     print(best_beta_dfm)
     # -----------------------------------------------------
     # Compute stats for all 3 models
