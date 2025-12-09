@@ -99,7 +99,7 @@ def run_multiple_neurons(
         )
         V = sol.sol(t_eval)[0]
         l = len(t_eval)
-        plt.plot(t_eval[l-200:], V[l-200:], label=f'Run {run+1}')  # skip transient
+        plt.plot(t_eval[l-400:], V[l-400:], label=f'Run {run+1}')  # skip transient
 
     plt.title(f'Single Neuron: {n_runs} Independent Runs')
     plt.xlabel('Time')
@@ -109,4 +109,4 @@ def run_multiple_neurons(
     plt.show()
 
 # Example: run 5 independent simulations
-run_multiple_neurons(n_runs=5)
+run_multiple_neurons(n_runs=1)

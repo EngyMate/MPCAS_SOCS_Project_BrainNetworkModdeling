@@ -45,11 +45,12 @@ def init_files():
     np.array([0]).tofile("optimization/slm_best_fitness.bin")
     np.array([0, 0]).tofile("optimization/slm_best_param.bin")
 
-def print_best():
+def get_best():
     best_fitness = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\slm_best_fitness.bin", dtype=float)[0]
     best_alpha = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\slm_best_param.bin", dtype=float)[0]
     best_beta = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\slm_best_param.bin", dtype=float)[1]
     print(f"best_fitness:{best_fitness}, best_alpha:{best_alpha}, best_beta:{best_beta}")
+    return best_fitness, best_alpha, best_beta
 
 
 def find_best_alpha_beta(individuals, C, true_time_series, alpha_range, beta_range, n_steps=1000, noise_std=1.0):

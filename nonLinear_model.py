@@ -104,10 +104,10 @@ params = dict(
     T_V_variance_firing_sigmoid = 1.0,
     I_external_current = 0.3,
     b_inhibitory_scaling_factor = 0.1,
-    C_intercolumn_coupling = 0.3
+    C_intercolumn_coupling = 0.9
 )
 
-def non_linear_model(params, out_length=100,time_span = (0, 500),time_steps = 6000, connectome_matrix=None , plot=False):
+def non_linear_model(params,time_span = (0, 500),time_steps = 6000, connectome_matrix=None , plot=False):
     # --- Parameters ---
 
     if connectome_matrix is None:
@@ -122,7 +122,7 @@ def non_linear_model(params, out_length=100,time_span = (0, 500),time_steps = 60
 
     W_i_initial = 0.5 * (1 + np.tanh((-71 - params["V_K_Nernst_potential_K"]) / params["T_ion_variance_channel_sigmoid"]))
     # --- Initial conditions with larger random differences ---
-    initial_state = np.tile([-71.0, 0, W_i_initial], (num_neuronal_nodes, 1)).flatten() + np.random.normal(0, 1.0, 3*num_neuronal_nodes)
+    initial_state = np.tile([-70, 0, W_i_initial], (num_neuronal_nodes, 1)).flatten() + np.random.normal(0, 1, 3*num_neuronal_nodes)
 
     # --- Simulation ---
 
@@ -179,7 +179,7 @@ def non_linear_model(params, out_length=100,time_span = (0, 500),time_steps = 60
         plt.grid()
         plt.show()
 
-    return V_i_membrane_potential_exc[-out_length:], Z_i_membrane_potential_inh[-out_length:], W_i_open_K_fraction[-out_length:], t_eval[-out_length:]
+    return V_i_membrane_potential_exc, Z_i_membrane_potential_inh, W_i_open_K_fraction, t_eval
 
 
 from scipy.signal import convolve
@@ -195,8 +195,8 @@ def spm_hrf(time):
     return hrf
 
 
-def non_linear_bold_z_model(params, connectome_matrix, out_length=100,time_span = (0, 500),time_steps = 6000):
-    V_i, Z_i, W_i, t_eval = non_linear_model(params,out_length,time_span,time_steps,connectome_matrix, plot=False)
+def non_linear_bold_z_model(params, connectome_matrix,time_span = (0, 500),time_steps = 6000):
+    V_i, Z_i, W_i, t_eval = non_linear_model(params,time_span,time_steps,connectome_matrix, plot=False)
 
     # Convert to firing rate
     Q_i = 0.5 * params["Q_max_excitatory_firing_rate"] * (1 + np.tanh((V_i - (-70)) / 1.0))
@@ -212,35 +212,87 @@ def non_linear_bold_z_model(params, connectome_matrix, out_length=100,time_span 
         BOLD_z = (BOLD - np.mean(BOLD, axis=0)) / np.std(BOLD, axis=0)
         BOLD_z_all.append(BOLD_z)
 
-    return np.array(BOLD_z_all)
+    return np.array(BOLD_z_all), t_eval
+
+def init_param_files():
+    init_param = [0.0] * 22
+    init_param[0] = (params["g_Ca_max_Ca_conductance"])
+    init_param[1] = (params["g_Na_max_Na_conductance"])
+    init_param[2] = (params["g_K_max_K_conductance"])
+    init_param[3] = (params["g_L_leak_conductance"])
+    init_param[4] = (params["V_Ca_Nernst_potential_Ca"])
+    init_param[5] = (params["V_Na_Nernst_potential_Na"])
+    init_param[6] = (params["V_K_Nernst_potential_K"])
+    init_param[7] = (params["V_L_leak_reversal_potential"])
+    init_param[8] = (params["V_T_trigger_value"])
+    init_param[9] = (params["a_ee_excitatory_to_excitatory"])
+    init_param[10] = (params["a_ie_inhibitory_to_excitatory"] )
+    init_param[11] = (params["a_ei_excitatory_to_inhibitory"])
+    init_param[12] = (params["r_NMDA_ratio_NMDA_to_AMPA"])
+    init_param[13] = (params["Q_max_excitatory_firing_rate"] )
+    init_param[14] = (params["Q_max_inhibitory_firing_rate"] )
+    init_param[15] = (params["phi_temperature_scaling_W"] )
+    init_param[16] = (params["tau_W_relaxation_time_W"] )
+    init_param[17] = (params["T_ion_variance_channel_sigmoid"])
+    init_param[18] = (params["T_V_variance_firing_sigmoid"])
+    init_param[19] = (params["I_external_current"])
+    init_param[20] = (params["b_inhibitory_scaling_factor"])
+    init_param[21] = (params["C_intercolumn_coupling"])
+
+    np.array([0]).tofile("optimization/nlm_best_fitness.bin")
+    np.array(init_param).tofile("optimization/nlm_best_param.bin")
+
+def get_best():
+    best_fitness = np.fromfile(
+        "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\nlm_best_fitness.bin",
+        dtype=float)[0]
+
+    path = "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\nlm_best_param.bin"
+    best_params = np.fromfile(path, dtype=float)
+
+    params = dict(
+        g_Ca_max_Ca_conductance=best_params[0],
+        g_Na_max_Na_conductance=best_params[1],
+        g_K_max_K_conductance=best_params[2],
+        g_L_leak_conductance=best_params[3],
+        V_Ca_Nernst_potential_Ca=best_params[4],
+        V_Na_Nernst_potential_Na=best_params[5],
+        V_K_Nernst_potential_K=best_params[6],
+        V_L_leak_reversal_potential=best_params[7],
+        V_T_trigger_value=best_params[8],
+        a_ee_excitatory_to_excitatory=best_params[9],
+        a_ie_inhibitory_to_excitatory=best_params[10],
+        a_ei_excitatory_to_inhibitory=best_params[11],
+        r_NMDA_ratio_NMDA_to_AMPA=best_params[12],
+        Q_max_excitatory_firing_rate=best_params[13],
+        Q_max_inhibitory_firing_rate=best_params[14],
+        phi_temperature_scaling_W=best_params[15],
+        tau_W_relaxation_time_W=best_params[16],
+        T_ion_variance_channel_sigmoid=best_params[17],
+        T_V_variance_firing_sigmoid=best_params[18],
+        I_external_current=best_params[19],
+        b_inhibitory_scaling_factor=best_params[20],
+        C_intercolumn_coupling=best_params[21]
+    )
+
+    print(f"best_fitness:{best_fitness}, best_alpha:{params}")
+    return best_fitness, params
 
 if __name__ == "__main__":
-    V_i, Z_i, W_i, t_eval = non_linear_model(params, plot=False)
+    #init_param_files()
 
-    # Convert to firing rate
-    Q_i = 0.5 * params["Q_max_excitatory_firing_rate"] * (1 + np.tanh((V_i - (-70)) / 1.0))
-
-    # HRF
-    hrf = spm_hrf(1.0)  # TR = 1s
-
-    # Convolve each neuron/population
-    BOLD_all = np.array([np.convolve(neuron, hrf)[:neuron.shape[0]] for neuron in Q_i])
-    BOLD_z_all = []
-
-    for BOLD in BOLD_all:
-
-        BOLD_z = (BOLD - np.mean(BOLD, axis=0)) / np.std(BOLD, axis=0)
-        BOLD_fc_matrix = np.corrcoef(BOLD_z.T)  # transpose so correlation is computed between columns (regions)
-        BOLD_z_all.append(BOLD_z)
+    BOLD_z_all, t_eval = non_linear_bold_z_model(params,None, time_span = (0, int(4800*1.2)),time_steps = int(4800*1.2),)
 
     # Plot a single neuron
     plt.figure(figsize=(10, 4))
-    for BOLD_z in BOLD_z_all:
-        plt.plot(t_eval[-200:], BOLD_z[ -200:])
+    for n, BOLD_z in enumerate(BOLD_z_all):
+        plt.plot(t_eval[-200:], BOLD_z[-200:], label = f"node {n}")
     plt.title('Simulated resting-state BOLD Z-scored')
     plt.xlabel('Time (s)')
+    plt.legend()
     plt.ylabel('BOLD signal')
     plt.show()
+
 
 
 
