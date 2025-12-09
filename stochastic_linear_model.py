@@ -62,7 +62,7 @@ def find_best_alpha_beta(individuals, C, true_time_series, alpha_range, beta_ran
     best_beta = np.fromfile("slm_best_param.bin", dtype=float)[1]
 
     for alpha, beta in product(alpha_range, beta_range):
-
+        print(f"alpha:{alpha}, beta:{beta}")
         fitness  = 0
         for i in range(individuals):
             u = simulate_linear_model(C[i], alpha, beta, n_steps=n_steps, noise_std=noise_std)
