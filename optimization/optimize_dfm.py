@@ -12,5 +12,5 @@ if __name__ == "__main__":
         fMRI_data.append(dm.load_fMRI_data(i))
 
     beta_range = np.arange(0, 6, 1.0)
-    times = np.arange(0, 500, 500/4800)
-    best_beta, best_fitness, best_sim = dlm.compute_best_beta_fast(individuals,DTI_data,fMRI_data, beta_range, times)
+    times = np.arange(0, 4800*1.2, 10000)
+    best_beta, best_fitness, best_sim = dlm.compute_best_beta(individuals,DTI_data,fMRI_data, beta_range, times)

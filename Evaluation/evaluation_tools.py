@@ -3,7 +3,6 @@ from matplotlib import pyplot as plt
 from scipy.stats import pearsonr, spearmanr
 
 import data_management as dm
-import stochastic_linear_model as slm
 
 
 # -------------------------------------------------------------
@@ -39,9 +38,6 @@ if __name__ == "__main__":
 
     individuals = 100
 
-    # Retrieve best parameters for stochastic linear model
-    best_fitness, best_alpha, best_beta = slm.get_best()
-
     # Initialize arrays for storing results per individual
     pear_emp = np.zeros(individuals)
     p_emp = np.zeros(individuals)
@@ -63,55 +59,33 @@ if __name__ == "__main__":
         SC = dm.load_DTI_data(i)
         fMRI = dm.load_fMRI_data(i)
 
-        # ------------------------------------------------------------------
-        # Simulate stochastic linear model (returns timeseries u)
-        # shape should be (timepoints, nodes)
-        # ------------------------------------------------------------------
-        u = slm.simulate_linear_model(SC, best_alpha, best_beta, n_steps=4800, noise_std=0.1)
-
-        # ------------------------------------------------------------------
-        # Compute FC: empirical & simulated
-        # ------------------------------------------------------------------
-        FC_emp = compute_fc(fMRI)
-        FC_sim = compute_fc(u)
-
+        FC_empirical = compute_fc(fMRI)
         # ------------------------------------------------------------------
         # Compute SC–FC correlations
         # ------------------------------------------------------------------
-        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = sc_fc_corr(SC, FC_emp)
-        pear_sim[i], p_sim[i], spear_sim[i], sp_sim[i], sc_vals_sim, fc_sim_vals = sc_fc_corr(SC, FC_sim)
+        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = sc_fc_corr(SC, FC_empirical)
 
         # Store SC-FC values for plotting (optional: concatenate across individuals)
         sc_vals_all.extend(sc_vals)
         fc_emp_vals_all.extend(fc_emp_vals)
-        fc_sim_vals_all.extend(fc_sim_vals)
 
     # Compute average correlations across individuals
     print("\n===== Empirical SC–FC =====")
     print("Pearson:  mean r =", pear_emp.mean(), " mean p =", p_emp.mean())
     print("Spearman: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
 
-    print("\n===== Simulated SC–FC =====")
-    print("Pearson:  mean r =", pear_sim.mean(), " mean p =", p_sim.mean())
-    print("Spearman: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
-
     # ------------------------------------------------------------------
-    # Scatterplot: Simulated FC vs Empirical FC
+    # Scatterplots: SC vs FC with linear fit (all individuals combined)
     # ------------------------------------------------------------------
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(12, 5))
 
-    # Scatter: each point is a connection (across all individuals)
-    plt.scatter(fc_sim_vals_all, fc_emp_vals_all, s=3, alpha=0.3, color='blue')
-
-    # Linear fit
-    coeff = np.polyfit(fc_sim_vals_all, fc_emp_vals_all, 1)  # y = m*x + b
-    fit_line = np.polyval(coeff, fc_sim_vals_all)
-    plt.plot(fc_sim_vals_all, fit_line, color='red', linewidth=2, label=f'Slope: {coeff[0]:.8f}')
-
-    plt.title("Stochastic linear simulated FC vs Empirical FC ")
-    plt.xlabel("Simulated Functional Connectivity")
-    plt.ylabel("Empirical Functional Connectivity")
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
+    plt.scatter(sc_vals_all, fc_emp_vals_all, s=3, alpha=0.3)
+    coeff_emp = np.polyfit(sc_vals_all, fc_emp_vals_all, 1)
+    fit_emp = np.polyval(coeff_emp, sc_vals_all)
+    plt.plot(sc_vals_all, fit_emp, color='red', linewidth=2, label=f'Slope: {coeff_emp[0]:.8f}')
+    plt.title("Empirical SC–FC")
+    plt.xlabel("Structural Connectivity")
+    plt.ylabel("Functional Connectivity")
+    plt.xlim(0, 0.8)
+    plt.ylim(-0.2, 1)
     plt.show()

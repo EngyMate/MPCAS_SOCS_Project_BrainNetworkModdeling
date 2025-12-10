@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.linalg import expm
-
+import Evaluation.evaluation_tools as et
 import numpy as np
 from scipy.linalg import expm
 
@@ -19,8 +19,7 @@ def prepare_laplacian_eigendecomposition(C):
 
     L = np.eye(C.shape[0]) - D_inv_sqrt @ C @ D_inv_sqrt
 
-    # Symmetric → use eigh
-    evals, evecs = np.linalg.eigh(L)
+    #invert to L^-1
 
     return evals, evecs
 
@@ -30,7 +29,6 @@ def nodewise_diffusion_timeseries_fast(evals, evecs, beta, times, u0=None):
     Fast diffusion using precomputed eigenvalues/vectors.
     """
     N=evecs.shape[0]
-    print(N)
     if u0 is None:
         u0 = np.random.normal(0, 0.5, N)
 
@@ -44,6 +42,22 @@ def nodewise_diffusion_timeseries_fast(evals, evecs, beta, times, u0=None):
         out.append(u)
 
     return np.array(out)
+
+def nodewise_diffusion(C, beta, times):
+    """
+    Fast diffusion using precomputed eigenvalues/vectors.
+    """
+
+    delta = np.sum(C, axis=1)
+    D_inv_sqrt = np.sqrt(np.diag(delta))
+
+    L = np.eye(C.shape[0]) - D_inv_sqrt @ C @ D_inv_sqrt
+
+    L_inv = np.linalg.inv(L)
+
+    c_f = np.exp(-beta * L_inv * times)
+
+    return c_f
 
 
 def init_files():
@@ -93,6 +107,35 @@ def compute_best_beta_fast(individuals, C, actual_activity, beta_range, times, u
             best_fitness = fitness
             np.array([best_fitness]).tofile("dlm_best_fitness.bin")
             best_sim = sim
+
+    return best_beta, best_fitness, best_sim
+
+def compute_best_beta(individuals, C, actual_activity, beta_range, times, u0=None):
+    """
+    Fast version: diagonalizes L once, reuses for all β.
+    """
+    N = C[0].shape[0]
+
+    best_fitness = np.fromfile("dlm_best_fitness.bin", dtype=float)[0]
+    best_beta = np.fromfile("dlm_best_param.bin", dtype=float)[0]
+    best_sim = None
+
+    # For all β values, simulate cheaply
+    for beta in beta_range:
+        for t in times:
+            error = 0
+            print(f"beta:{beta}")
+            for i in range(individuals):
+                c_f = nodewise_diffusion(C[i], beta, t)
+                et.compute_fc(c_f)
+                r_p, p_p, r_s, p_s, sc_vals, fc_vals = et.sc_fc_corr(C[i], c_f)
+                fitness = r_p
+
+            if fitness > best_fitness:
+                best_beta = beta
+                np.array([best_beta]).tofile("dlm_best_beta.bin")
+                best_fitness = fitness
+                np.array([best_fitness]).tofile("dlm_best_fitness.bin")
 
     return best_beta, best_fitness, best_sim
 

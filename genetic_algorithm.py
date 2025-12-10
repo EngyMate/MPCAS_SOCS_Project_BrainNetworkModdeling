@@ -5,218 +5,199 @@ import numpy as np
 
 import data_management as dm
 import nonLinear_model as nlm
+import test
+import multiprocessing as mp
 
-number_of_genes = 22
+
 creep_rate = 0.05
 
 # Initialize population:
 # Uncomment the line below and implement the function
 def initialize_population(population_size, maximum_variable_value):
-  population = []
+    population = []
 
-  for i in range(population_size):
-    if i==0:
-      params = dict(
-        g_Ca_max_Ca_conductance=1.2,
-        g_Na_max_Na_conductance=1.0,
-        g_K_max_K_conductance=1.8,
-        g_L_leak_conductance=0.5,
-        V_Ca_Nernst_potential_Ca=100.0,
-        V_Na_Nernst_potential_Na=30.0,
-        V_K_Nernst_potential_K=-77.0,
-        V_L_leak_reversal_potential=-50.0,
-        V_T_trigger_value=30,
-        a_ee_excitatory_to_excitatory=0.1,
-        a_ie_inhibitory_to_excitatory=0.9,
-        a_ei_excitatory_to_inhibitory=0.1,
-        r_NMDA_ratio_NMDA_to_AMPA=0.3,
-        Q_max_excitatory_firing_rate=1.0,
-        Q_max_inhibitory_firing_rate=1.0,
-        phi_temperature_scaling_W=0.5,
-        tau_W_relaxation_time_W=1.0,
-        T_ion_variance_channel_sigmoid=0.001,
-        T_V_variance_firing_sigmoid=1.0,
-        I_external_current=0.3,
-        b_inhibitory_scaling_factor=0.1,
-        C_intercolumn_coupling=0.3
-      )
-      chromosome = [0.0] * 22
-      chromosome[0] = (params["g_Ca_max_Ca_conductance"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[1] = (params["g_Na_max_Na_conductance"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[2] = (params["g_K_max_K_conductance"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[3] = (params["g_L_leak_conductance"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[4] = (params["V_Ca_Nernst_potential_Ca"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[5] = (params["V_Na_Nernst_potential_Na"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[6] = (params["V_K_Nernst_potential_K"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[7] = (params["V_L_leak_reversal_potential"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[8] = (params["V_T_trigger_value"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[9] = (params["a_ee_excitatory_to_excitatory"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[10] = (params["a_ie_inhibitory_to_excitatory"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[11] = (params["a_ei_excitatory_to_inhibitory"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[12] = (params["r_NMDA_ratio_NMDA_to_AMPA"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[13] = (params["Q_max_excitatory_firing_rate"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[14] = (params["Q_max_inhibitory_firing_rate"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[15] = (params["phi_temperature_scaling_W"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[16] = (params["tau_W_relaxation_time_W"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[17] = (params["T_ion_variance_channel_sigmoid"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[18] = (params["T_V_variance_firing_sigmoid"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[19] = (params["I_external_current"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[20] = (params["b_inhibitory_scaling_factor"] + maximum_variable_value) / (2 * maximum_variable_value)
-      chromosome[21] = (params["C_intercolumn_coupling"] + maximum_variable_value) / (2 * maximum_variable_value)
+    number_of_genes = len(nlm.params)
 
-    else:
-      chromosome = [random.random() for _ in range(number_of_genes)]
+    for i in range(population_size):
+        if i == 0:
+            chromosome = encode_individual(nlm.params, maximum_variable_value)
+        elif i == 1 or i == 2:
+            chromosome = [min(max(np.random.normal(0, 0.1), -1), 1) for _ in range(number_of_genes)]
+        else:
+            mold = encode_individual(nlm.params, maximum_variable_value)
+            chromosome = [min(max(mold[k] + np.random.normal(0, 0.01), -1), 1) for k in range(number_of_genes)]
+
     population.append(chromosome)
-  return population
+    return population
 
+def encode_individual(individual, maximum_variable_value):
+
+    chromosome = [0.0] * len(individual)
+    # Fill using a for-loop
+    for i, key in enumerate(individual):
+        chromosome[i] = (individual[key] + maximum_variable_value[i])/ (2 * maximum_variable_value[i])
+
+    return chromosome
 # Decode chromosome:
 def decode_chromosome(chromosome, maximum_variable_value):
+    param_copy = test.params.copy()
 
-  params = dict(
-    g_Ca_max_Ca_conductance=-maximum_variable_value + 2*maximum_variable_value*chromosome[0],
-    g_Na_max_Na_conductance=-maximum_variable_value + 2*maximum_variable_value*chromosome[1],
-    g_K_max_K_conductance=-maximum_variable_value + 2*maximum_variable_value*chromosome[2],
-    g_L_leak_conductance=-maximum_variable_value + 2*maximum_variable_value*chromosome[3],
-    V_Ca_Nernst_potential_Ca=-maximum_variable_value + 2*maximum_variable_value*chromosome[4],
-    V_Na_Nernst_potential_Na=-maximum_variable_value + 2*maximum_variable_value*chromosome[5],
-    V_K_Nernst_potential_K=-maximum_variable_value + 2*maximum_variable_value*chromosome[6],
-    V_L_leak_reversal_potential=-maximum_variable_value + 2*maximum_variable_value*chromosome[7],
-    V_T_trigger_value=-maximum_variable_value + 2*maximum_variable_value*chromosome[8],
-    a_ee_excitatory_to_excitatory=-maximum_variable_value + 2*maximum_variable_value*chromosome[9],
-    a_ie_inhibitory_to_excitatory=-maximum_variable_value + 2*maximum_variable_value*chromosome[10],
-    a_ei_excitatory_to_inhibitory=-maximum_variable_value + 2*maximum_variable_value*chromosome[11],
-    r_NMDA_ratio_NMDA_to_AMPA=-maximum_variable_value + 2*maximum_variable_value*chromosome[12],
-    Q_max_excitatory_firing_rate=-maximum_variable_value + 2*maximum_variable_value*chromosome[13],
-    Q_max_inhibitory_firing_rate=-maximum_variable_value + 2*maximum_variable_value*chromosome[14],
-    phi_temperature_scaling_W=-maximum_variable_value + 2*maximum_variable_value*chromosome[15],
-    tau_W_relaxation_time_W=-maximum_variable_value + 2*maximum_variable_value*chromosome[16],
-    T_ion_variance_channel_sigmoid=-maximum_variable_value + 2*maximum_variable_value*chromosome[17],
-    T_V_variance_firing_sigmoid=-maximum_variable_value + 2*maximum_variable_value*chromosome[18],
-    I_external_current=-maximum_variable_value + 2*maximum_variable_value*chromosome[19],
-    b_inhibitory_scaling_factor=-maximum_variable_value + 2*maximum_variable_value*chromosome[20],
-    C_intercolumn_coupling=-maximum_variable_value + 2*maximum_variable_value*chromosome[21]
-  )
+    for i, key in enumerate(param_copy):
+        param_copy[key] = -maximum_variable_value[i] + 2*maximum_variable_value*chromosome[i]
 
-  return params
+    return param_copy
 
 # Evaluate indviduals:
-def evaluate_individual(x):
-  files = dm.count_files_in_folder()
-  cost = 0
+def evaluate_individual(params):
+    individuals = 100
+    DTI_data = []
+    fMRI_data = []
 
-  for i in range(files["fMRI"]):
-    DTI_data = dm.load_DTI_data(i)
-    sim_fMRI = nlm.non_linear_bold_z_model(params=x, connectome_matrix=DTI_data, out_length=4800,time_span =(0, 500), time_steps = 6000)
+    for i in range(individuals):
+        DTI_data.append(dm.load_DTI_data(i))  # SC matrix
+        fMRI_data.append(dm.load_fMRI_data(i))  # fMRI timeseries
 
-    fMRI_data = dm.load_fMRI_data(i)
+    try:
+          t_span = (0, 4800 * 1.2)
+          t_eval = np.linspace(t_span[1] - 1000 * 1.2, t_span[1], 1000)
 
-    cost += np.sum(np.pow(fMRI_data - sim_fMRI, 2))
+          r = random.randint(0, 99)
+          SC = DTI_data[r]
 
-  fitness = 1 / cost
 
-  return fitness
+          num_nodes = SC.shape[0]
+
+          V, W, Z, t_eval = nlm.simulate_network(
+              num_nodes,
+              t_span,
+              t_eval,
+              connectome_matrix=SC,
+              noise_level=0.1
+          )
+          sim_fMRI = V.T
+
+    except Exception:
+        return -1  # Solver failure = zero fitness
+
+    fMRI = fMRI_data[r][-1000:, :]  # shape (4800, 246)
+
+    # not np.isfinite(sim_fMRI).all():
+        #return -2
+
+    if not fMRI.shape == sim_fMRI.shape:
+        return -3
+
+    err = np.sum((fMRI - sim_fMRI) ** 2)
+    if err <= 0:
+        return -2
+
+    return 1.0 / err
+
 
 # Select individuals:
 def tournament_select(fitness_list, tournament_probability, tournament_size):
-  selected_individuals = []
-  number_of_individuals = len(fitness_list)
+    selected_individuals = []
+    number_of_individuals = len(fitness_list)
 
-  for i in range(tournament_size):
-      individual_nr = random.randint(0,number_of_individuals-1)
-      selected_individuals.append([individual_nr, fitness_list[individual_nr]])
+    for i in range(tournament_size):
+        individual_nr = random.randint(0,number_of_individuals-1)
+        selected_individuals.append([individual_nr, fitness_list[individual_nr]])
 
-  selected_individuals.sort(key = lambda x:x[1], reverse=True)
+    selected_individuals.sort(key = lambda x:x[1], reverse=True)
 
-  for trial in range(tournament_size - 1):
-    r = random.random()
-    if r<tournament_probability:
-      return selected_individuals[0][0]
-    else:
-      selected_individuals.pop(0)
+    for trial in range(tournament_size - 1):
+        r = random.random()
+        if r<tournament_probability:
+            return selected_individuals[0][0]
+        else:
+            selected_individuals.pop(0)
 
-  return selected_individuals[0][0]
+    return selected_individuals[0][0]
 
 
 # Carry out crossover:
 def cross(chromosome1, chromosome2):
-  length_of_chromosome = len(chromosome1)
-  crossover_index = random.randint(1, length_of_chromosome-2)
+    length_of_chromosome = len(chromosome1)
+    crossover_index = random.randint(1, length_of_chromosome-2)
 
-  chromosome1_new = chromosome1[:crossover_index] + chromosome2[crossover_index:]
-  chromosome2_new = chromosome2[:crossover_index] + chromosome1[crossover_index:]
+    chromosome1_new = chromosome1[:crossover_index] + chromosome2[crossover_index:]
+    chromosome2_new = chromosome2[:crossover_index] + chromosome1[crossover_index:]
 
-  return chromosome1_new, chromosome2_new
+    return chromosome1_new, chromosome2_new
 
 # Mutate individuals:
 def mutate(chromosome, mutation_probability):
-  new_chromosome = chromosome.copy()
+    new_chromosome = chromosome.copy()
 
-  number_of_genes = len(chromosome)
-  for gene_index in range(number_of_genes):
-    r = random.random()
-    if r < mutation_probability:
-      mutated_value = random.gauss(new_chromosome[gene_index], creep_rate)
-      if mutated_value > 1:
-          mutated_value = 1
-      elif mutated_value <0:
-          mutated_value = 0
-      new_chromosome[gene_index] = mutated_value
+    number_of_genes = len(chromosome)
+    for gene_index in range(number_of_genes):
+        r = random.random()
+        if r < mutation_probability:
+            mutated_value = random.gauss(new_chromosome[gene_index], creep_rate)
+        if mutated_value > 1:
+            mutated_value = 1
+        elif mutated_value <0:
+            mutated_value = 0
+        new_chromosome[gene_index] = mutated_value
 
-  return new_chromosome
+    return new_chromosome
 
 # Genetic algorithm
 
-def run_function_optimization(population_size, number_of_genes, number_of_variables, maximum_variable_value, \
-                              tournament_size, tournament_probability, crossover_probability,\
+def run_function_optimization(population_size, maximum_variable_value,
+                              tournament_size, tournament_probability, crossover_probability,
                               mutation_probability, number_of_generations):
- 
- # This function should return the maximum fitness and the best individual (i.e., a vector with
- # two elements (x1,x2) containing the values corresponding to the maximum fitness found.
- 
- # Note that some parameters have different names compared to the programming introduction
 
-  population = initialize_population(population_size,number_of_genes)
+    population = initialize_population(population_size, maximum_variable_value)
 
-  for generation_index in range(number_of_generations):
+    for generation_index in range(number_of_generations):
+        if generation_index % 10 == 0:
+            print(f"Generation: {generation_index}")
 
-    maximum_fitness = 0
+        # Load current maximum fitness
+        maximum_fitness = np.fromfile("nlm_best_fitness.bin", dtype=float)[0]
+        best_chromosome = []
+        best_individual = []
 
-    best_chromosome = []
-    best_individual = []
-    fitness_list = []
-    for chromosome in population:
-      individual = decode_chromosome(chromosome,maximum_variable_value)
-      fitness = evaluate_individual(individual)
-      if (fitness > maximum_fitness):
-        maximum_fitness = fitness
-        best_chromosome = chromosome.copy()  
-        best_individual = individual.copy()
-      fitness_list.append(fitness)
+        # === Parallel evaluation ===
+        with mp.Pool(mp.cpu_count()) as pool:
+            individuals_decoded = [decode_chromosome(chrom, maximum_variable_value) for chrom in population]
+            fitness_list = pool.map(evaluate_individual, individuals_decoded)
+        # ===========================
 
-    temp_population = []
-    for i in range(0,population_size,2):
-      index_1 = tournament_select(fitness_list, tournament_probability, tournament_size)
-      index_2 = tournament_select(fitness_list, tournament_probability, tournament_size)
-      chromosome1 = population[index_1].copy()
-      chromosome2 = population[index_2].copy()
-      r = random.random()
-      if r < crossover_probability:
-        [new_chromosome_1, new_chromosome_2] = cross(chromosome1,chromosome2)
-        temp_population.append(new_chromosome_1)
-        temp_population.append(new_chromosome_2) 
-      else:
-        temp_population.append(chromosome1)
-        temp_population.append(chromosome2)
+        # Update best individual
+        for i, fitness in enumerate(fitness_list):
+            if fitness > maximum_fitness:
+                maximum_fitness = fitness
+                np.array([maximum_fitness]).tofile("nlm_best_fitness.bin")
+                best_chromosome = population[i].copy()
+                best_individual = individuals_decoded[i].copy()
+                np.array(best_chromosome).tofile("nlm_best_param.bin")
 
-    for i in range(population_size):
-      original_chromosome = temp_population[i]
+        print(f"Fitness list: {fitness_list}")
 
-      mutated_chromosome = mutate(original_chromosome, mutation_probability)
-      temp_population[i] = mutated_chromosome
+        # Selection and crossover
+        temp_population = []
+        for i in range(0, population_size, 2):
+            index_1 = tournament_select(fitness_list, tournament_probability, tournament_size)
+            index_2 = tournament_select(fitness_list, tournament_probability, tournament_size)
+            chromosome1 = population[index_1].copy()
+            chromosome2 = population[index_2].copy()
+            if random.random() < crossover_probability:
+                chromosome1, chromosome2 = cross(chromosome1, chromosome2)
+            temp_population.append(chromosome1)
+            temp_population.append(chromosome2)
 
-    temp_population[0] = best_chromosome
-    population = temp_population.copy()
+        # Mutation
+        for i in range(population_size):
+            temp_population[i] = mutate(temp_population[i], mutation_probability)
 
-  return [maximum_fitness, best_individual]
+        # Elitism: keep the best chromosome
+        if len(best_chromosome) > 0:
+            temp_population[0] = best_chromosome
+
+        population = temp_population.copy()
+
+    return [maximum_fitness, best_individual]
  
 

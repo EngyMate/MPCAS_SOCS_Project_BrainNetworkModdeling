@@ -1,0 +1,10 @@
+NON-LINEAR
+best_fitness:0.0, best_alpha:{'gCa': np.float64(1.1), 'gK': np.float64(2.0), 'gL': np.float64(0.5), 'gNa': np.float64(6.7), 'phi': np.float64(0.7), 'tau_K': np.float64(1.0), 'TK': np.float64(0.0), 'TCa': np.float64(-0.01), 'TNa': np.float64(0.3), 'd_K': np.float64(0.3), 'd_Ca': np.float64(0.15), 'd_Na': np.float64(0.15), 'VCa': np.float64(1.0), 'VK': np.float64(-0.7), 'VL': np.float64(-0.5), 'VNa': np.float64(0.53), 'aei': np.float64(2.0), 'aie': np.float64(2.0), 'aee': np.float64(0.4), 'ane': np.float64(1.0), 'ani': np.float64(0.4), 'Iext': np.float64(0.3), 'b': np.float64(0.1), 'C': np.float64(0.1), 'rNMDA': np.float64(0.25), 'VT': np.float64(0.0), 'd_V': np.float64(0.65), 'ZT': np.float64(0.0), 'd_Z': np.float64(0.7), 'QV_max': np.float64(1.0), 'QZ_max': np.float64(1.0), 't_scale': np.float64(1.0)}
+
+===== Empirical SC–FC =====
+Pearson r = 0.17161156782766723    p = 6.748708259774308e-198
+Spearman r = 0.13649795656504154   p = 2.909348810761171e-125
+
+===== Simulated SC–FC =====
+Pearson r = 0.20341411243098434    p = 7.061510793362488e-279
+Spearman r = 0.1311181198927426   p = 1.184681271552107e-115

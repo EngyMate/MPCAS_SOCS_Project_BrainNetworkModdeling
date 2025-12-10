@@ -46,7 +46,7 @@ def single_neuron_model(
         + excitatory_synapse_strength_to_inhibitory * Z * firing_rate
         + inhibitory_synapse_strength_to_excitatory * external_current
     )
-    dZdt = scaling_factor * (inhibitory_synapse_strength_to_inhibitory * external_current + excitatory_synapse_strength_to_inhibitory * firing_rate)
+    dZdt = scaling_factor * (inhibitory_synapse_strength_to_inhibitory * external_current + excitatory_synapse_strength_to_inhibitory * V * firing_rate)
     dWdt = temperature_scaling * (K_act - W) / relaxation_time_constant
 
     return [dVdt, dZdt, dWdt]
@@ -67,7 +67,7 @@ def run_multiple_neurons(
         calcium_potential = 100.0,
         sodium_potential = 50.0,
         potassium_potential = -77.0,
-        leak_potential = -50.0,
+        leak_potential = -30.0,
         excitatory_synapse_strength = 0.5,
         inhibitory_synapse_strength_to_inhibitory = 0.1,
         inhibitory_synapse_strength_to_excitatory = 0.1,
@@ -78,7 +78,7 @@ def run_multiple_neurons(
         temperature_scaling = 0.5,
         relaxation_time_constant = 15.0,
         ion_channel_variance = 1.0,
-        firing_rate_variance = 1.0,
+        firing_rate_variance = 0.1,
         external_current = 0.5,
         scaling_factor = 0.1
     )
