@@ -73,13 +73,12 @@ if __name__ == "__main__":
         # ---------------------------------------------------------------
         # Simulate diffusion model timeseries: shape = (T, nodes)
         # ---------------------------------------------------------------
-        u = dlm.nodewise_diffusion_timeseries_fast(evals, evecs, 2, times)
+        FC_sim = dlm.nodewise_diffusion(SC,best_beta, times)
 
         # ------------------------------------------------------------------
         # Compute FC: empirical & simulated
         # ------------------------------------------------------------------
         FC_emp = compute_fc(fMRI)
-        FC_sim = compute_fc(u)
 
         # ------------------------------------------------------------------
         # Compute SC–FC correlations
