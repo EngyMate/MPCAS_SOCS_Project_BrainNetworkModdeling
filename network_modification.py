@@ -1,6 +1,5 @@
 import numpy as np
 from matplotlib import pyplot as plt
-import networkx as nx
 
 import data_management
 import data_management as dm
@@ -59,13 +58,15 @@ def rewire_connectome_symmetric(C, coords, n_path_steps):
     #  STEP 1 — each node proposes new neighbors
     # -------------------------------------------------------------------------
     connections = np.sum(C > 0, axis=1)
+    unity = np.ones((N, N))
 
     new_C = C.copy()
     rewired = []
 
     for i in range(N):
+
         current_paths = find_paths(i, C, n_path_steps)
-        potential_paths = find_paths(i, np.ones((N,N)), n_path_steps)
+        potential_paths = find_paths(i, unity, n_path_steps)
         end_terminals = [p[n_path_steps] for p in current_paths]
 
         scored = []
