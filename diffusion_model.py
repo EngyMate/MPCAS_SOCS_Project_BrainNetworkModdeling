@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.linalg
 from matplotlib import pyplot as plt
 from scipy.linalg import expm
 import Evaluation.evaluation_tools as et
@@ -19,8 +20,7 @@ def prepare_laplacian_eigendecomposition(C):
 
     L = np.eye(C.shape[0]) - D_inv_sqrt @ C @ D_inv_sqrt
 
-    #invert to L^-1
-
+    scipy.linalg.inv()
     return evals, evecs
 
 
@@ -43,21 +43,18 @@ def nodewise_diffusion_timeseries_fast(evals, evecs, beta, times, u0=None):
 
     return np.array(out)
 
-def nodewise_diffusion(C, beta, times):
-    """
-    Fast diffusion using precomputed eigenvalues/vectors.
-    """
-
+def nodewise_diffusion(C, beta, t):
     delta = np.sum(C, axis=1)
-    D_inv_sqrt = np.sqrt(np.diag(delta))
+    delta = np.where(delta == 0, 1e-10, delta)
+    D_inv_sqrt = np.diag(1 / np.sqrt(delta))
 
     L = np.eye(C.shape[0]) - D_inv_sqrt @ C @ D_inv_sqrt
 
-    L_inv = np.linalg.inv(L)
+    print(np.isnan(L).any(), np.isinf(L).any())
 
-    c_f = np.exp(-beta * L_inv * times)
+    C_f = expm(-beta * L * t)
 
-    return c_f
+    return C_f
 
 
 def init_files():
@@ -123,7 +120,6 @@ def compute_best_beta(individuals, C, actual_activity, beta_range, times, u0=Non
     # For all β values, simulate cheaply
     for beta in beta_range:
         for t in times:
-            error = 0
             print(f"beta:{beta}")
             for i in range(individuals):
                 c_f = nodewise_diffusion(C[i], beta, t)

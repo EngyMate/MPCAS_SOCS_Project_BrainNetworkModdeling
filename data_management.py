@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 
-PATH_excel_fMRI_data = "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\NetworkModelling\\data\\fMRI{0}"
-PATH_excel_DTI_data = "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\NetworkModelling\\data\\DTI{0}"
+PATH_excel_fMRI_data = "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\NetworkModelling\\data\\fMRI\\{0}"
+PATH_excel_DTI_data = "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\NetworkModelling\\data\\DTI\\{0}"
 PATH_excel_BNA_atlas = "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\NetworkModelling\\data\\bna_atlas.xlsx"
 PATH_DTI_data = "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\data\\DTI\\{0}"
 PATH_fMRI_data = "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\data\\fMRI\\{0}"
@@ -92,27 +92,34 @@ def load_fMRI_data(file_nr):
 
 def load_DTI_data(file_nr):
     files = list_files_in_folder(PATH_DTI_data.format(""))
-    DTI_data = np.fromfile(PATH_DTI_data.format(files[file_nr]), dtype=float).reshape(DTI_data_shape[file_nr])
+    path = PATH_DTI_data.format(files[file_nr])
+    DTI_data = np.fromfile(path, dtype=float).reshape(DTI_data_shape[file_nr])
     return DTI_data
 
 def excel_to_bin():
+    """
     excel_fMRI_data_files = list_files_in_folder(PATH_excel_fMRI_data.format(""))
     shapes_fMRI = []
 
     for file in excel_fMRI_data_files:
-        fMRI_data = load_excel_to_numpy(PATH_excel_fMRI_data.format(f"\\{excel_fMRI_data_files[0]}"))
-        fMRI_data.tofile(PATH_fMRI_data.format(file.replace("xlsx", "bin")))
+        excel_path = PATH_excel_fMRI_data.format(file)
+        fMRI_data = load_excel_to_numpy(excel_path)
+        path = PATH_fMRI_data.format(file.replace("xlsx", "bin"))
+        fMRI_data.tofile(path)
         shapes_fMRI.append(fMRI_data.shape)
 
     print(shapes_fMRI)
+    """
 
     excel_DTI_data_files = list_files_in_folder(PATH_excel_DTI_data.format(""))
 
     shapes_DTI = []
 
     for file in excel_DTI_data_files:
-        DTI_data = load_excel_to_numpy(PATH_excel_DTI_data.format(f"\\{excel_DTI_data_files[0]}"))
-        DTI_data.tofile(PATH_DTI_data.format(file.replace("xlsx", "bin")))
+        excel_path = PATH_excel_DTI_data.format(file)
+        DTI_data = load_excel_to_numpy(excel_path)
+        path = PATH_DTI_data.format(file.replace("xlsx", "bin"))
+        DTI_data.tofile(path)
         shapes_DTI.append(DTI_data.shape)
 
     print(shapes_DTI)
@@ -120,5 +127,4 @@ def excel_to_bin():
 
 # Example usage
 if __name__ == "__main__":
-    pass
-    #excel_to_bin()
+    excel_to_bin()

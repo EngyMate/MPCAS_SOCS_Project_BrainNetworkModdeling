@@ -13,3 +13,4 @@ if __name__ == "__main__":
     alpha_range = np.arange(-3, 3, 0.1)
     beta_range = np.arange(0, 6, 0.1)
     best_alpha, best_beta, best_fitness = slm.find_best_alpha_beta(individuals, DTI_data, fMRI_data, alpha_range, beta_range, n_steps=4800)
+    slm.get_best()

@@ -64,16 +64,13 @@ if __name__ == "__main__":
 
         num_nodes = SC.shape[0]
 
-        # Prepare Laplacian eigendecomposition
-        evals, evecs = dlm.prepare_laplacian_eigendecomposition(SC)
-
         # Time indices
         times = np.arange(0, 4800 * 1.2, 4800)
 
         # ---------------------------------------------------------------
         # Simulate diffusion model timeseries: shape = (T, nodes)
         # ---------------------------------------------------------------
-        FC_sim = dlm.nodewise_diffusion(SC,best_beta, times)
+        FC_sim = dlm.nodewise_diffusion(SC,1, 2)
 
         # ------------------------------------------------------------------
         # Compute FC: empirical & simulated
