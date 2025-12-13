@@ -115,7 +115,7 @@ def simulate_network(num_nodes, t_span, t_eval, connectome_matrix=None, noise_le
     V = sol.y.reshape((num_nodes, 3, -1))[:, 0, :]
     W = sol.y.reshape((num_nodes, 3, -1))[:, 1, :]
     Z = sol.y.reshape((num_nodes, 3, -1))[:, 2, :]
-    return V, W, Z, t_eval
+    return np.array(V), np.array(W), np.array(Z), np.array(t_eval)
 
 
 
