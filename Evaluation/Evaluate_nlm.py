@@ -8,33 +8,6 @@ import nonLinear_model as nlm
 import random
 import evaluation_tools as et
 
-# ---------------------------------------------------------
-# --- FUNCTIONAL CONNECTIVITY COMPUTATION -----------------
-# ---------------------------------------------------------
-
-def compute_fc(timeseries):
-    """
-    timeseries shape = (timepoints, nodes)
-    returns FC matrix (nodes x nodes)
-    """
-    # z-score for safety
-    ts = (timeseries - timeseries.mean(axis=0)) / timeseries.std(axis=0)
-    FC = np.corrcoef(ts, rowvar=False)
-    return FC
-
-
-def sc_fc_correlation(SC, FC):
-    mask = np.triu(np.ones(SC.shape), k=1).astype(bool)
-    sc_vals = SC[mask]
-    fc_vals = FC[mask]
-
-    # Fisher z-transform (optional)
-    # fc_vals = np.arctanh(fc_vals)
-
-    pear_r, pear_p = pearsonr(sc_vals, fc_vals)
-    spear_r, spear_p = spearmanr(sc_vals, fc_vals)
-
-    return pear_r, pear_p, spear_r, spear_p, sc_vals, fc_vals
 
 
 # ---------------------------------------------------------
@@ -113,8 +86,8 @@ def eval():
         # Compute FC (empirical + simulated)
         # -------------------------------
 
-        FC_empirical = compute_fc(fMRI)
-        FC_simulated = compute_fc(sim_fMRI)
+        FC_empirical = et.compute_fc(fMRI)
+        FC_simulated = et.compute_fc(sim_fMRI)
 
         # ------------------------------------------------------------------
         # Compute SC–FC correlations

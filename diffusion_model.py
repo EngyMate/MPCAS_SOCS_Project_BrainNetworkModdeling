@@ -50,8 +50,6 @@ def nodewise_diffusion(C, beta, t):
 
     L = np.eye(C.shape[0]) - D_inv_sqrt @ C @ D_inv_sqrt
 
-    print(np.isnan(L).any(), np.isinf(L).any())
-
     C_f = expm(-beta * L * t)
 
     return C_f

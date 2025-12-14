@@ -29,6 +29,22 @@ def sc_fc_corr(SC, FC):
 
     return r_p, p_p, r_s, p_s, sc_vals, fc_vals
 
+def fc_fc_corr(FC_emp, FC_sim):
+    mask = np.triu(np.ones_like(FC_emp), k=1).astype(bool)
+
+    emp_vals = FC_emp[mask]
+    sim_vals = FC_sim[mask]
+
+    # Remove NaNs / infs
+    m = np.isfinite(emp_vals) & np.isfinite(sim_vals)
+    emp_vals, sim_vals = emp_vals[m], sim_vals[m]
+
+    r_p, p_p = pearsonr(emp_vals, sim_vals)
+    r_s, p_s = spearmanr(emp_vals, sim_vals)
+
+    return r_p, p_p, r_s, p_s
+
+
 
 # -------------------------------------------------------------
 # MAIN SCRIPT

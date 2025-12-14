@@ -228,6 +228,7 @@ if __name__ == "__main__":
     print(f"Mean path length:{np.mean(A[A > 0])} Mean path length rewired: {np.mean(A_rewired[A_rewired > 0])}")
 
 
+
     #new_C_2, rewired_2 = rewire_connectome_symmetric(new_C, coords, n_path_steps=2)
 
     # Circular layout

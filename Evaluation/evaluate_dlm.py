@@ -1,34 +1,17 @@
+from os.path import split
+
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.stats import pearsonr, spearmanr
 
 import data_management as dm
 import diffusion_model as dlm
-
+import evaluation_tools as et
 
 # -------------------------------------------------------------
 # HELPER FUNCTIONS
 # -------------------------------------------------------------
 
-def compute_fc(timeseries):
-    """
-    timeseries shape: (timepoints, nodes)
-    returns FC: (nodes x nodes)
-    """
-    ts = (timeseries - timeseries.mean(axis=0)) / timeseries.std(axis=0)
-    return np.corrcoef(ts, rowvar=False)
-
-
-def sc_fc_corr(SC, FC):
-    mask = np.triu(np.ones_like(SC), k=1).astype(bool)
-
-    sc_vals = SC[mask]
-    fc_vals = FC[mask]
-
-    r_p, p_p = pearsonr(sc_vals, fc_vals)
-    r_s, p_s = spearmanr(sc_vals, fc_vals)
-
-    return r_p, p_p, r_s, p_s, sc_vals, fc_vals
 
 
 # -------------------------------------------------------------
@@ -36,7 +19,37 @@ def sc_fc_corr(SC, FC):
 # -------------------------------------------------------------
 
 if __name__ == "__main__":
+    BNA_atlas = dm.load_mixed_excel(dm.PATH_excel_BNA_atlas)
+    node_labels = [a[0].split("_")[0] for a in BNA_atlas]
 
+    label_to_color = {
+        'SFG': '#1f77b4',
+        'MFG': '#aec7e8',
+        'IFG': '#ff7f0e',
+        'OrG': '#ffbb78',
+        'PrG': '#2ca02c',
+        'PCL': '#98df8a',
+        'STG': '#d62728',
+        'MTG': '#ff9896',
+        'ITG': '#9467bd',
+        'FuG': '#c5b0d5',
+        'PhG': '#8c564b',
+        'pSTS': '#c49c94',
+        'SPL': '#e377c2',
+        'IPL': '#f7b6d2',
+        'PCun': '#7f7f7f',
+        'PoG': '#c7c7c7',
+        'INS': '#bcbd22',
+        'CG': '#dbdb8d',
+        'MVOcC': '#17becf',
+        'LOcC': '#9edae5',
+        'Amyg': '#393b79',
+        'Hipp': '#637939',
+        'BG': '#8c6d31',
+        'Tha': '#843c39'
+    }
+
+    colors = [label_to_color[l] for l in node_labels]
     individuals = 100
 
     best_fitness, best_beta = dlm.get_best()
@@ -53,12 +66,15 @@ if __name__ == "__main__":
     sp_sim = np.zeros(individuals)
 
     # Optional: store all SC-FC values per individual
-    sc_vals_all = []
-    fc_emp_vals_all = []
-    fc_sim_vals_all = []
+    sc_vals_all = np.zeros(246*246)
+    fc_emp_vals_all = np.zeros(246*246)
+    fc_sim_vals_all = np.zeros(246*246)
 
+    pear_fc = np.zeros(individuals)
+    spear_fc = np.zeros(individuals)
     # Load structural and functional data
     for i in range(individuals):
+        print(i)
         SC = dm.load_DTI_data(i)
         fMRI = dm.load_fMRI_data(i)
 
@@ -75,18 +91,27 @@ if __name__ == "__main__":
         # ------------------------------------------------------------------
         # Compute FC: empirical & simulated
         # ------------------------------------------------------------------
-        FC_emp = compute_fc(fMRI)
+        FC_emp = et.compute_fc(fMRI)
 
         # ------------------------------------------------------------------
         # Compute SC–FC correlations
         # ------------------------------------------------------------------
-        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = sc_fc_corr(SC, FC_emp)
-        pear_sim[i], p_sim[i], spear_sim[i], sp_sim[i], sc_vals_sim, fc_sim_vals = sc_fc_corr(SC, FC_sim)
+        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = et.sc_fc_corr(SC, FC_emp)
+        pear_sim[i], p_sim[i], spear_sim[i], sp_sim[i], sc_vals_sim, fc_sim_vals = et.sc_fc_corr(SC, FC_sim)
+
+        r_p, p_p, r_s, p_s = et.fc_fc_corr(FC_emp, FC_sim)
+
+        pear_fc[i] = r_p
+        spear_fc[i] = r_s
 
         # Store SC-FC values for plotting (optional: concatenate across individuals)
-        sc_vals_all.extend(sc_vals)
-        fc_emp_vals_all.extend(fc_emp_vals)
-        fc_sim_vals_all.extend(fc_sim_vals)
+        sc_vals_all += SC.flatten()
+        fc_emp_vals_all += FC_emp.flatten()
+        fc_sim_vals_all += FC_sim.flatten()
+
+    sc_vals_all /= individuals
+    fc_emp_vals_all /= individuals
+    fc_sim_vals_all /= individuals
 
     # Compute average correlations across individuals
     print("\n===== Empirical SC–FC =====")
@@ -97,23 +122,30 @@ if __name__ == "__main__":
     print("Pearson:  mean r =", pear_sim.mean(), " mean p =", p_sim.mean())
     print("Spearman: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
 
+    print("\n===== SC–SC =====")
+    print("Pearson:  mean r =", pear_fc.mean(), " mean p =", p_sim.mean())
+    print("Spearman: mean r =", spear_fc.mean(), " mean p =", sp_sim.mean())
+
     # ------------------------------------------------------------------
     # Scatterplot: Simulated FC vs Empirical FC
     # ------------------------------------------------------------------
+
+    p = pear_fc.mean()
+    s = spear_fc.mean()
+
     plt.figure(figsize=(6, 6))
+    mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
 
-    # Scatter: each point is a connection (across all individuals)
-    plt.scatter(fc_sim_vals_all, fc_emp_vals_all, s=3, alpha=0.3, color='blue')
-
-    # Linear fit
-    coeff = np.polyfit(fc_sim_vals_all, fc_emp_vals_all, 1)  # y = m*x + b
-    fit_line = np.polyval(coeff, fc_sim_vals_all)
-    plt.plot(fc_sim_vals_all, fit_line, color='red', linewidth=2, label=f'Slope: {coeff[0]:.8f}')
-
-    plt.title("Diffusion model FC vs Empirical FC ")
-    plt.xlabel("Simulated Functional Connectivity")
-    plt.ylabel("Empirical Functional Connectivity")
-    plt.legend()
-    plt.grid(alpha=0.3)
+    plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
+    x = np.array([0, 0.1])
+    #line = p * x + 0.4
+    #plt.plot(x, line, 'k--', alpha=0.7)
+    plt.text(0.05, 0.95, f"Pearson r = {p:.3f}",
+             transform=plt.gca().transAxes, va='top')
+    plt.text(0.05, 0.90, f"Spearman r = {s:.3f}",
+             transform=plt.gca().transAxes, va='top')
+    plt.xlabel("Simulated FC")
+    plt.ylabel("Empirical FC")
+    plt.title("Diffusion FC-FC similarity")
     plt.tight_layout()
     plt.show()
