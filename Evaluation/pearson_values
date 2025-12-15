@@ -26,3 +26,31 @@ Spearman: mean r = 0.1328175134582431  mean p = 8.134290443549352e-73
 ===== Simulated SC–FC =====
 Pearson:  mean r = 0.8602204884141048  mean p = 0.0
 Spearman: mean r = 0.4934003164965277  mean p = 0.0
+
+Modified network
+Stochastic
+===== Empirical SC–FC =====
+Pearson:  mean r = 0.18311893713454253  mean p = 7.87376211086771e-119
+Spearman: mean r = 0.14062899579842905  mean p = 3.561323590994506e-70
+
+===== Simulated SC–FC =====
+Pearson:  mean r = 0.05012269424193363  mean p = 2.370952441873292e-14
+Spearman: mean r = 0.048909594703149276  mean p = 3.1139245688313704e-13
+
+===== SC–SC =====
+Pearson:  mean r = 0.011642938513320324  mean p = 2.370952441873292e-14
+Spearman: mean r = 0.008049234050798574  mean p = 3.1139245688313704e-13
+
+
+Diffusion
+===== Empirical SC–FC =====
+Pearson:  mean r = 0.18311893713454253  mean p = 7.87376211086771e-119
+Spearman: mean r = 0.14062899579842905  mean p = 3.561323590994506e-70
+
+===== Simulated SC–FC =====
+Pearson:  mean r = 0.8829178913384739  mean p = 0.0
+Spearman: mean r = 0.551152180499458  mean p = 0.0
+
+===== SC–SC =====
+Pearson:  mean r = 0.20628802432570487  mean p = 0.0
+Spearman: mean r = 0.11348445996480414  mean p = 0.0

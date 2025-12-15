@@ -99,7 +99,8 @@ def load_DTI_data(file_nr):
 
 def load_mDTI_data(file_nr):
     files = list_files_in_folder(PATH_mDTI_data.format(""))
-    path = PATH_mDTI_data.format(files[file_nr])
+    mdti_files = [f for f in files if "mDTI" in f]
+    path = PATH_mDTI_data.format(mdti_files[file_nr])
     mDTI_data = np.fromfile(path, dtype=float).reshape(DTI_data_shape[file_nr])
     return mDTI_data
 

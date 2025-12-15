@@ -12,46 +12,17 @@ import evaluation_tools as et
 # HELPER FUNCTIONS
 # -------------------------------------------------------------
 
-
+MODIFIED = True
 
 # -------------------------------------------------------------
 # MAIN SCRIPT
 # -------------------------------------------------------------
 
 if __name__ == "__main__":
-    BNA_atlas = dm.load_mixed_excel(dm.PATH_excel_BNA_atlas)
-    node_labels = [a[0].split("_")[0] for a in BNA_atlas]
-
-    label_to_color = {
-        'SFG': '#1f77b4',
-        'MFG': '#aec7e8',
-        'IFG': '#ff7f0e',
-        'OrG': '#ffbb78',
-        'PrG': '#2ca02c',
-        'PCL': '#98df8a',
-        'STG': '#d62728',
-        'MTG': '#ff9896',
-        'ITG': '#9467bd',
-        'FuG': '#c5b0d5',
-        'PhG': '#8c564b',
-        'pSTS': '#c49c94',
-        'SPL': '#e377c2',
-        'IPL': '#f7b6d2',
-        'PCun': '#7f7f7f',
-        'PoG': '#c7c7c7',
-        'INS': '#bcbd22',
-        'CG': '#dbdb8d',
-        'MVOcC': '#17becf',
-        'LOcC': '#9edae5',
-        'Amyg': '#393b79',
-        'Hipp': '#637939',
-        'BG': '#8c6d31',
-        'Tha': '#843c39'
-    }
-
-    colors = [label_to_color[l] for l in node_labels]
-    individuals = 100
-
+    ############
+    individuals = 10
+    ############
+    #CHANGE THIS 1-100
     best_fitness, best_beta = dlm.get_best()
 
     # Initialize arrays for storing results per individual
@@ -75,7 +46,13 @@ if __name__ == "__main__":
     # Load structural and functional data
     for i in range(individuals):
         print(i)
-        SC = dm.load_DTI_data(i)
+        #CHANGE THIS
+        ######
+        if not MODIFIED:
+            SC = dm.load_DTI_data(i)
+        else:
+            SC = dm.load_mDTI_data(i)
+        ######
         fMRI = dm.load_fMRI_data(i)
 
         num_nodes = SC.shape[0]
@@ -140,9 +117,9 @@ if __name__ == "__main__":
     x = np.array([0, 0.1])
     #line = p * x + 0.4
     #plt.plot(x, line, 'k--', alpha=0.7)
-    plt.text(0.05, 0.95, f"Pearson r = {p:.3f}",
+    plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
              transform=plt.gca().transAxes, va='top')
-    plt.text(0.05, 0.90, f"Spearman r = {s:.3f}",
+    plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
              transform=plt.gca().transAxes, va='top')
     plt.xlabel("Simulated FC")
     plt.ylabel("Empirical FC")

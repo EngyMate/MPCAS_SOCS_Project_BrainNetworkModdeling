@@ -17,7 +17,13 @@ import evaluation_tools as et
 
 if __name__ == "__main__":
 
-    individuals = 100
+    #CHANGE THIS
+    ##############
+    individuals = 10
+    ##############
+    MODIFIED = True
+
+
 
     # Retrieve best parameters for stochastic linear model
     best_fitness, best_alpha, best_beta = slm.get_best()
@@ -43,7 +49,14 @@ if __name__ == "__main__":
 
     # Load structural and functional data
     for i in range(individuals):
-        SC = dm.load_DTI_data(i)
+        #CHANGE THIS
+        ##############
+        if not MODIFIED:
+            SC = dm.load_DTI_data(i)
+        else:
+            SC = dm.load_mDTI_data(i)
+        #############
+
         fMRI = dm.load_fMRI_data(i)
 
         # ------------------------------------------------------------------
@@ -86,6 +99,10 @@ if __name__ == "__main__":
     print("Pearson:  mean r =", pear_sim.mean(), " mean p =", p_sim.mean())
     print("Spearman: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
 
+    print("\n===== SC–SC =====")
+    print("Pearson:  mean r =", pear_fc.mean(), " mean p =", p_sim.mean())
+    print("Spearman: mean r =", spear_fc.mean(), " mean p =", sp_sim.mean())
+
     # ------------------------------------------------------------------
     # Scatterplot: Simulated FC vs Empirical FC
     # ------------------------------------------------------------------
@@ -101,9 +118,9 @@ if __name__ == "__main__":
     x = np.array([0, 0.1])
     #line = p * x + 0.4
     #plt.plot(x, line, 'k--', alpha=0.7)
-    plt.text(0.05, 0.95, f"Pearson r = {p:.3f}",
+    plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
              transform=plt.gca().transAxes, va='top')
-    plt.text(0.05, 0.90, f"Spearman r = {s:.3f}",
+    plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
              transform=plt.gca().transAxes, va='top')
     plt.xlabel("Simulated FC")
     plt.ylabel("Empirical FC")

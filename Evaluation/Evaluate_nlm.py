@@ -15,13 +15,18 @@ import evaluation_tools as et
 # --- CONTINUE FROM YOUR SCRIPT ---------------------------
 # ---------------------------------------------------------
 
+MODIFIED = True
+
 def sim():
-    individuals = 100
+    individuals = 10
     DTI_data = []
     fMRI_data = []
 
     for i in range(individuals):
-        DTI_data.append(dm.load_DTI_data(i))  # SC matrix
+        if not MODIFIED:
+            DTI_data.append(dm.load_DTI_data(i))  # SC matrix
+        else:
+            DTI_data.append(dm.load_mDTI_data(i))  # SC matrix
         fMRI_data.append(dm.load_fMRI_data(i))  # fMRI timeseries
 
     #best_fitness, best_params = nlm.get_best()
@@ -30,7 +35,7 @@ def sim():
     t_eval = np.linspace(t_span[0], t_span[1], 4800+1000)
 
     #simulated files 0 to 51
-    files_to_use = range(99)
+    files_to_use = range(10)
 
     for r in files_to_use:
         print(r)
@@ -51,7 +56,10 @@ def sim():
 
         # Choose one simulated variable as simulated fMRI (e.g., V)
         sim_fMRI = V.transpose()  # ensure shape (timepoints, nodes)
-        sim_fMRI[-4800:, :].tofile(f"nln_sim_{r}.bin")
+        if not MODIFIED:
+            sim_fMRI[-4800:, :].tofile(f"nln_sim_{r}.bin")
+        else:
+            sim_fMRI[-4800:, :].tofile(f"modified_nln_sim_{r}.bin")
 
 def eval():
     individuals = 100
@@ -77,9 +85,14 @@ def eval():
 
     for r in files_to_use:
         print(r)
-        sim_fMRI = np.fromfile(f"nln_sim_{r}.bin", dtype=float).reshape((4800, 246))
+        if not MODIFIED:
+            sim_fMRI = np.fromfile(f"nln_sim_{r}.bin", dtype=float).reshape((4800, 246))
+            SC = dm.load_DTI_data(r)
+        else:
+            sim_fMRI = np.fromfile(f"modified_nln_sim_{r}.bin", dtype=float).reshape((4800, 246))
+            SC = dm.load_mDTI_data(r)
 
-        SC = dm.load_DTI_data(r)
+
         fMRI = dm.load_fMRI_data(r)
         # -------------------------------
         # Compute FC (empirical + simulated)
@@ -152,9 +165,9 @@ def eval():
     x = np.array([0, 0.1])
     # line = p * x + 0.4
     # plt.plot(x, line, 'k--', alpha=0.7)
-    plt.text(0.05, 0.95, f"Pearson r = {p:.3f}",
+    plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
              transform=plt.gca().transAxes, va='top')
-    plt.text(0.05, 0.90, f"Spearman r = {s:.3f}",
+    plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
              transform=plt.gca().transAxes, va='top')
     plt.xlabel("Simulated FC")
     plt.ylabel("Empirical FC")
