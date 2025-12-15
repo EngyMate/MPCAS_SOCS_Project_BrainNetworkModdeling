@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -27,6 +29,7 @@ with [(i,j), (n,m)] where (i,j) is original connection and (n,m) is reconnected 
 """
 
 def extract_coord():
+    BNA_atlas = dm.load_mixed_excel(dm.PATH_excel_BNA_atlas)
     coordinates_arr = []
     for row in BNA_atlas:
         coordinates_arr.append([row[2], row[3], row[4]])
@@ -62,21 +65,23 @@ def rewire_connectome_symmetric(C, coords, n_path_steps):
 
     new_C = C.copy()
     rewired = []
+    index = [j for j in range(N)]
+    random.shuffle(index)
 
     for i in range(N):
-
-        current_paths = find_paths(i, C, n_path_steps)
-        potential_paths = find_paths(i, unity, n_path_steps)
+        current_paths = find_paths(index[i], C, n_path_steps)
+        potential_paths = find_paths(index[i], unity, n_path_steps)
         end_terminals = [p[n_path_steps] for p in current_paths]
 
         scored = []
         for p in potential_paths:
-            dist = path_distance(p, coords)
-            scored.append((dist, p))
+            if p[-1] in end_terminals:
+                dist = path_distance(p, coords)
+                scored.append((dist, p))
 
         scored.sort(key=lambda x: x[0])
 
-        suggested_connections = [np[1][2] for np in scored[:connections[i]]]
+        suggested_connections = [np[1][2] for np in scored[:connections[index[i]]]]
         current_connections = [cp[1] for cp in current_paths]
 
         remove = []
@@ -87,11 +92,11 @@ def rewire_connectome_symmetric(C, coords, n_path_steps):
 
         for sp in suggested_connections:
             if sp not in current_connections:
-                new_C[i][sp] = C[i][remove[0]]
-                new_C[sp][i] = C[i][remove[0]]
-                new_C[i][remove[0]] = 0
-                new_C[remove[0]][i] = 0
-                rewired.append([(i, remove[0]), (i, sp)])
+                new_C[index[i]][sp] = C[index[i]][remove[0]]
+                new_C[sp][index[i]] = C[index[i]][remove[0]]
+                new_C[index[i]][remove[0]] = 0
+                new_C[remove[0]][index[i]] = 0
+                rewired.append([(index[i], remove[0]), (index[i], sp)])
                 remove.pop(0)
 
     return new_C, rewired
@@ -181,86 +186,140 @@ def clustering_coefficient(A):
 
     return C
 
-if __name__ == "__main__":
-    BNA_atlas = dm.load_mixed_excel(dm.PATH_excel_BNA_atlas)
+def show(file):
+        connections =np.fromfile("data/Modified_DTI/connections.bin", dtype=float).reshape((2,100))
+        cc =np.fromfile("data/Modified_DTI/cc.bin", dtype=float).reshape((2,100))
+        total_degree=np.fromfile("data/Modified_DTI/total_degree.bin", dtype=float).reshape((2,100))
+        avg_degree=np.fromfile("data/Modified_DTI/avg_degree.bin", dtype=float).reshape((2,100))
+        diameter=np.fromfile("data/Modified_DTI/diameter.bin", dtype=float).reshape((2,100))
+        mean_path_length=np.fromfile("data/Modified_DTI/mean_path_length.bin", dtype=float).reshape((2,100))
+
+        print(f"connections:{connections[0,:].mean()} connections rewired:{connections[1,:].mean()}")
+        print(f"clustering_coefficient:{cc[0,:].mean()} clustering_coefficient rewired: {cc[1,:].mean()}")
+        print(f"total degree: {total_degree[0,:].mean()} total degree rewired: {total_degree[1,:].mean()}")
+        print(f"avg degree: {avg_degree[0,:].mean()} avg degree rewired: {avg_degree[1,:].mean()}")
+        print(f"Diameter:{diameter[0,:].mean()} Diameter rewired: {diameter[1,:].mean()}")
+        print(f"Mean path length:{mean_path_length[0,:].mean()} Mean path length rewired: {mean_path_length[1,:].mean()}")
+
+        individuals = [ind for ind in range(100)]
+
+        plt.plot(individuals, cc[0,:], label="Actual Clustering coefficient")
+        plt.plot(individuals, cc[1, :], label="SPI Clustering coefficient")
+
+        plt.plot(individuals, mean_path_length[0, :], label="Actual Mean path length")
+        plt.plot(individuals, mean_path_length[1, :], label="SPI Mean path length")
+
+        plt.legend()
+        plt.title("CC and MPL of actial and shortest path ideal connectome")
+        plt.show()
+
+        new_C = np.fromfile(f"data/Modified_DTI/mDTI_individual_{file}.bin")
+        C = dm.load_DTI_data(file)
+        N=246
+        # Circular layout
+        theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
+
+        x = np.cos(theta)
+        y = np.sin(theta)
+
+        plt.figure(figsize=(8, 8))
+
+        M = C > 0
+        M_rewired = new_C > 0
+
+        # Draw nodes
+        plt.scatter(x, y, s=10, c='lightblue', zorder=3)
+        # for i in range(N):
+        # plt.text(x[i] * 1.05, y[i] * 1.05, str(i), ha='center', va='center')
+
+        # Draw edges
+        for i in range(N):
+            for j in range(i + 1, N):  # only upper triangle to avoid duplicates
+                if M[i, j] and M_rewired[i, j]:
+                    # Edge unchanged
+                    plt.plot([x[i], x[j]], [y[i], y[j]], 'k-', linewidth=0.2, zorder=1)
+                elif M[i, j] and not M_rewired[i, j]:
+                    # Edge changed (removed)
+                    plt.plot([x[i], x[j]], [y[i], y[j]], 'r-', linewidth=0.2, zorder=1)
+                elif not M[i, j] and M_rewired[i, j]:
+                    # Edge changed (added)
+                    plt.plot([x[i], x[j]], [y[i], y[j]], 'g-', linewidth=0.2, zorder=1)
+
+        plt.axis('off')
+        plt.title("Unchanged (black), removed (red) and added (green) Edges")
+        plt.show()
+
+def calc():
+
+
+    connections = np.zeros((2, 100))
+    cc = np.zeros((2, 100))
+    total_degree = np.zeros((2, 100))
+    avg_degree = np.zeros((2, 100))
+    diameter = np.zeros((2, 100))
+    mean_path_length = np.zeros((2, 100))
 
     coordinates = extract_coord()
+    for i in range(100):
+        print(i)
+        C = data_management.load_DTI_data(i)
 
-    dti = data_management.load_DTI_data(0)
+        # =====================================================
+        # Create a 10-node sample connectome
+        # =====================================================
+        """
+        np.random.seed(42)
+        N = 246
 
-    # =====================================================
-    # Create a 10-node sample connectome
-    # =====================================================
-    """
-    np.random.seed(42)
-    N = 246
-    
-    coords = np.random.rand(N, 3)
+        coords = np.random.rand(N, 3)
 
-    C = np.zeros((N, N))
-    for i in range(N):
-        for j in range(i + 1, N):
-            if np.random.rand() < 0.05:
-                w = np.random.rand()
-                C[i, j] = C[j, i] = w
-    """
-    C = dti
-    coords = coordinates
-    N = C.shape[0]
-    # =====================================================
-    # Apply rewiring
-    # =====================================================
-    new_C, rewired = rewire_connectome_symmetric(C, coords, n_path_steps=2)
-    print(f"Rewired:{len(rewired)}/{np.sum(C > 0)}")
-    print(f"Current:{np.sum(new_C > 0)}")
-    """
-    for r in rewired:
-        print(r)
-    print("\n")
-    """
+        C = np.zeros((N, N))
+        for i in range(N):
+            for j in range(i + 1, N):
+                if np.random.rand() < 0.05:
+                    w = np.random.rand()
+                    C[i, j] = C[j, i] = w
+        """
+        coords = coordinates
 
-    print(f"clustering_coefficient:{clustering_coefficient(C)} clustering_coefficient rewired: {clustering_coefficient(new_C)}")
-    print(f"total degree: {np.sum(nodes_degree(C))} total degree rewired: {np.sum(nodes_degree(new_C))}")
-    print(f"avg degree: {np.mean(nodes_degree(C))} avg degree rewired: {np.mean(nodes_degree(new_C))}")
-    A = matrix_path_length(C)
-    A_rewired = matrix_path_length(new_C)
-    print(f"Diameter:{np.max(A)} Diameter rewired: {np.max(A_rewired)}")
-    print(f"Mean path length:{np.mean(A[A > 0])} Mean path length rewired: {np.mean(A_rewired[A_rewired > 0])}")
+        # =====================================================
+        # Apply rewiring
+        # =====================================================
+        new_C, rewired = rewire_connectome_symmetric(C, coords, n_path_steps=2)
+
+        new_C.tofile(f"data/Modified_DTI/mDTI_individual_{i}.bin")
+
+        A = matrix_path_length(C)
+        A_rewired = matrix_path_length(new_C)
+
+        connections[0, i] = np.sum(new_C > 0)
+        connections[1, i] = np.sum(C > 0)
+
+        cc[0, i] = clustering_coefficient(C)
+        cc[1, i] = clustering_coefficient(new_C)
+
+        total_degree[0, i] = np.sum(nodes_degree(C))
+        total_degree[1, i] = np.sum(nodes_degree(new_C))
+
+        avg_degree[0, i] = np.mean(nodes_degree(C))
+        avg_degree[1, i] = np.mean(nodes_degree(new_C))
+
+        diameter[0, i] = np.max(A)
+        diameter[1, i] = np.max(A_rewired)
+
+        mean_path_length[0, i] = np.mean(A[A > 0])
+        mean_path_length[1, i] = np.mean(A_rewired[A_rewired > 0])
+
+    connections.tofile("data/Modified_DTI/connections.bin")
+    cc.tofile("data/Modified_DTI/cc.bin")
+    total_degree.tofile("data/Modified_DTI/total_degree.bin")
+    avg_degree.tofile("data/Modified_DTI/avg_degree.bin")
+    diameter.tofile("data/Modified_DTI/diameter.bin")
+    mean_path_length.tofile("data/Modified_DTI/mean_path_length.bin")
+
+if __name__ == "__main__":
+    calc()
 
 
-
-    #new_C_2, rewired_2 = rewire_connectome_symmetric(new_C, coords, n_path_steps=2)
-
-    # Circular layout
-    theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
-    x = np.cos(theta)
-    y = np.sin(theta)
-
-    plt.figure(figsize=(8, 8))
-
-    M = C > 0
-    M_rewired = new_C > 0
-
-    # Draw nodes
-    plt.scatter(x, y, s=10, c='lightblue', zorder=3)
-    for i in range(N):
-        plt.text(x[i] * 1.05, y[i] * 1.05, str(i), ha='center', va='center')
-
-    # Draw edges
-    for i in range(N):
-        for j in range(i + 1, N):  # only upper triangle to avoid duplicates
-            if M[i, j] and M_rewired[i, j]:
-                # Edge unchanged
-                plt.plot([x[i], x[j]], [y[i], y[j]], 'k-', linewidth=0.2, zorder=1)
-            elif  M[i, j] and not M_rewired[i, j]:
-                # Edge changed (removed)
-                plt.plot([x[i], x[j]], [y[i], y[j]], 'r-', linewidth=0.2, zorder=1)
-            elif not M[i, j] and M_rewired[i, j]:
-                # Edge changed (added)
-                plt.plot([x[i], x[j]], [y[i], y[j]], 'g-', linewidth=0.2, zorder=1)
-
-    plt.axis('off')
-    plt.title("Unchanged (black), removed (red) and added (green) Edges")
-    plt.show()
 
 
