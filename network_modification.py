@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import data_management
 import data_management as dm
 
+PLOT = False
 
 """
 The algorithm should work in the follwing way: 
@@ -201,99 +202,102 @@ def show(file=0, file_numbers = 100):
         print(f"Diameter:{diameter[0,:].sum()/file_numbers} Diameter rewired: {diameter[1,:].sum()/file_numbers}")
         print(f"Mean path length:{mean_path_length[0,:].sum()/file_numbers} Mean path length rewired: {mean_path_length[1,:].sum()/file_numbers}")
 
-        individuals = [ind for ind in range(file_numbers)]
 
-        fig, axs = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
+        if PLOT:
+            individuals = [ind for ind in range(file_numbers)]
 
-        # ---- Compute means ----
-        mean_cc_actual = np.mean(cc[0, :file_numbers])
-        mean_cc_spi = np.mean(cc[1, :file_numbers])
+            fig, axs = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
 
-        mean_mpl_actual = np.mean(mean_path_length[0, :file_numbers])
-        mean_mpl_spi = np.mean(mean_path_length[1, :file_numbers])
+            # ---- Compute means ----
+            mean_cc_actual = np.mean(cc[0, :file_numbers])
+            mean_cc_spi = np.mean(cc[1, :file_numbers])
 
-        # ---- Row 1: Clustering Coefficient (CC) ----
-        axs[0].plot(individuals, cc[0, :file_numbers],
-                    label="Actual Clustering Coefficient")
-        axs[0].plot(individuals, cc[1, :file_numbers],
-                    label="SPI Clustering Coefficient")
-        axs[0].set_title("Clustering Coefficient (CC)")
-        axs[0].grid()
-        axs[0].legend()
+            mean_mpl_actual = np.mean(mean_path_length[0, :file_numbers])
+            mean_mpl_spi = np.mean(mean_path_length[1, :file_numbers])
 
-        # Add mean text
-        axs[0].text(
-            0.98, 0.95,
-            f"Mean Actual: {mean_cc_actual:.4f}\nMean SPI: {mean_cc_spi:.4f}",
-            transform=axs[0].transAxes,
-            ha="right", va="top",
-            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8)
-        )
 
-        # ---- Row 2: Mean Path Length (MPL) ----
-        axs[1].plot(individuals, mean_path_length[0, :file_numbers],
-                    label="Actual Mean Path Length")
-        axs[1].plot(individuals, mean_path_length[1, :file_numbers],
-                    label="SPI Mean Path Length")
-        axs[1].set_title("Mean Path Length (MPL)")
-        axs[1].grid()
-        axs[1].legend()
+            # ---- Row 1: Clustering Coefficient (CC) ----
+            axs[0].plot(individuals, cc[0, :file_numbers],
+                        label="Actual Clustering Coefficient")
+            axs[0].plot(individuals, cc[1, :file_numbers],
+                        label="SPI Clustering Coefficient")
+            axs[0].set_title("Clustering Coefficient (CC)")
+            axs[0].grid()
+            axs[0].legend()
 
-        # Add mean text
-        axs[1].text(
-            0.98, 0.95,
-            f"Mean Actual: {mean_mpl_actual:.4f}\nMean SPI: {mean_mpl_spi:.4f}",
-            transform=axs[1].transAxes,
-            ha="right", va="top",
-            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8)
-        )
+            # Add mean text
+            axs[0].text(
+                0.98, 0.95,
+                f"Mean Actual: {mean_cc_actual:.4f}\nMean SPI: {mean_cc_spi:.4f}",
+                transform=axs[0].transAxes,
+                ha="right", va="top",
+                bbox=dict(boxstyle="round", facecolor="white", alpha=0.8)
+            )
 
-        # ---- Shared labels ----
-        axs[1].set_xlabel(r"$I[n]$ - individuals")
-        fig.supylabel(r"CC and MPL Values for $n = 10$ individual")
-        fig.suptitle("CC and MPL of Actual and Shortest Path Ideal (SPI) Connectome")
+            # ---- Row 2: Mean Path Length (MPL) ----
+            axs[1].plot(individuals, mean_path_length[0, :file_numbers],
+                        label="Actual Mean Path Length")
+            axs[1].plot(individuals, mean_path_length[1, :file_numbers],
+                        label="SPI Mean Path Length")
+            axs[1].set_title("Mean Path Length (MPL)")
+            axs[1].grid()
+            axs[1].legend()
 
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-        plt.show()
+            # Add mean text
+            axs[1].text(
+                0.98, 0.95,
+                f"Mean Actual: {mean_mpl_actual:.4f}\nMean SPI: {mean_mpl_spi:.4f}",
+                transform=axs[1].transAxes,
+                ha="right", va="top",
+                bbox=dict(boxstyle="round", facecolor="white", alpha=0.8)
+            )
 
-        N = 246
+            # ---- Shared labels ----
+            axs[1].set_xlabel(r"$I[n]$ - individuals")
+            fig.supylabel(r"CC and MPL Values for $n = 10$ individual")
+            fig.suptitle("CC and MPL of Actual and Shortest Path Ideal (SPI) Connectome")
 
-        new_C = np.fromfile(f"data/Modified_DTI/mDTI_individual_{file}.bin").reshape((N, N))
-        C = dm.load_DTI_data(file)
+            plt.tight_layout(rect=[0, 0, 1, 0.95])
+            plt.show()
 
-        # Circular layout
-        theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
+            N = 246
 
-        x = np.cos(theta)
-        y = np.sin(theta)
+            new_C = np.fromfile(f"data/Modified_DTI/mDTI_individual_{file}.bin").reshape((N, N))
+            C = dm.load_DTI_data(file)
 
-        plt.figure(figsize=(8, 8))
+            # Circular layout
+            theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
 
-        M = C > 0
-        M_rewired = new_C > 0
+            x = np.cos(theta)
+            y = np.sin(theta)
 
-        # Draw nodes
-        plt.scatter(x, y, s=10, c='blue', zorder=3)
-        # for i in range(N):
-        # plt.text(x[i] * 1.05, y[i] * 1.05, str(i), ha='center', va='center')
+            plt.figure(figsize=(8, 8))
 
-        # Draw edges
-        for i in range(N):
-            for j in range(i + 1, N):  # only upper triangle to avoid duplicates
-                if M[i, j] and M_rewired[i, j]:
-                    # Edge unchanged
-                    plt.plot([x[i], x[j]], [y[i], y[j]], 'k-', linewidth=0.5, zorder=1)
-                elif M[i, j] and not M_rewired[i, j]:
-                    # Edge changed (removed)
-                    plt.plot([x[i], x[j]], [y[i], y[j]], 'r-', linewidth=0.5, zorder=1)
-                elif not M[i, j] and M_rewired[i, j]:
-                    # Edge changed (added)
-                    plt.plot([x[i], x[j]], [y[i], y[j]], 'g-', linewidth=0.5, zorder=1)
+            M = C > 0
+            M_rewired = new_C > 0
 
-        plt.axis('off')
-        plt.title("Unchanged (black), removed (red) and added (green) Edges")
-        plt.savefig("Figures/modification_to_SC.png")
-        #plt.show()
+            # Draw nodes
+            plt.scatter(x, y, s=10, c='blue', zorder=3)
+            # for i in range(N):
+            # plt.text(x[i] * 1.05, y[i] * 1.05, str(i), ha='center', va='center')
+
+            # Draw edges
+            for i in range(N):
+                for j in range(i + 1, N):  # only upper triangle to avoid duplicates
+                    if M[i, j] and M_rewired[i, j]:
+                        # Edge unchanged
+                        plt.plot([x[i], x[j]], [y[i], y[j]], 'k-', linewidth=0.5, zorder=1)
+                    elif M[i, j] and not M_rewired[i, j]:
+                        # Edge changed (removed)
+                        plt.plot([x[i], x[j]], [y[i], y[j]], 'r-', linewidth=0.5, zorder=1)
+                    elif not M[i, j] and M_rewired[i, j]:
+                        # Edge changed (added)
+                        plt.plot([x[i], x[j]], [y[i], y[j]], 'g-', linewidth=0.5, zorder=1)
+
+            plt.axis('off')
+            plt.title("Unchanged (black), removed (red) and added (green) Edges")
+            plt.savefig("Figures/modification_to_SC.png", transparent=True)
+            #plt.show()
 
 def calc(files):
 

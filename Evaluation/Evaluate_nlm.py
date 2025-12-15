@@ -14,11 +14,20 @@ import evaluation_tools as et
 # ---------------------------------------------------------
 # --- CONTINUE FROM YOUR SCRIPT ---------------------------
 # ---------------------------------------------------------
-
 MODIFIED = True
 
+RUN_SIMULATION = False
+SHOW_TIME_SERIES = False
+EVALUATE = True
+PLOT = True
+
+
 def sim():
-    individuals = 10
+    if MODIFIED:
+        individuals = 10
+    else:
+        individuals = 50
+
     DTI_data = []
     fMRI_data = []
 
@@ -35,7 +44,7 @@ def sim():
     t_eval = np.linspace(t_span[0], t_span[1], 4800+1000)
 
     #simulated files 0 to 51
-    files_to_use = range(10)
+    files_to_use = range(individuals)
 
     for r in files_to_use:
         print(r)
@@ -62,8 +71,16 @@ def sim():
             sim_fMRI[-4800:, :].tofile(f"modified_nln_sim_{r}.bin")
 
 def eval():
-    individuals = 100
-    files_to_use = range(52)
+    if MODIFIED:
+        individuals = 10
+    else:
+        individuals = 50
+
+    m = ""
+    if MODIFIED:
+        m = "SPI"
+
+    files_to_use = range(individuals)
     l = len(files_to_use)
     pear_emp = 0
     p_emp = 0
@@ -79,6 +96,7 @@ def eval():
     sc_vals_all = np.zeros(246 * 246)
     fc_emp_vals_all = np.zeros(246 * 246)
     fc_sim_vals_all = np.zeros(246 * 246)
+    person_arr = np.zeros(individuals)
 
     pear_fc = 0
     spear_fc = 0
@@ -118,6 +136,7 @@ def eval():
 
         r_p, p_p, r_s, p_s = et.fc_fc_corr(FC_empirical, FC_simulated)
 
+        person_arr[r] = r_p
         pear_fc += r_p
         spear_fc += r_s
         # Store SC-FC values for plotting (optional: concatenate across individuals)
@@ -150,37 +169,53 @@ def eval():
     print("Pearson:  mean r =", pear_sim, " mean p =", p_sim)
     print("Spearman: mean r =", spear_sim, " mean p =", sp_sim)
 
+    print("\n===== SC–SC =====")
+    print("Pearson:  mean r =", pear_fc, " mean p =", p_sim)
+    print("Spearman: mean r =", spear_fc, " mean p =", sp_sim)
     # ------------------------------------------------------------------
     # Scatterplot: Simulated FC vs Empirical FC
     # ------------------------------------------------------------------
 
-    p = pear_fc.mean()
-    s = spear_fc.mean()
+    p = pear_fc
+    s = spear_fc
 
-    plt.figure(figsize=(6, 6))
+    print(f"nonLinear_pearson_{m}=[")
+    for p in person_arr:
+        print(f"{p},")
+    print(f"]")
 
-    mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
+    if PLOT:
+        plt.figure(figsize=(6, 6))
 
-    plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
-    x = np.array([0, 0.1])
-    # line = p * x + 0.4
-    # plt.plot(x, line, 'k--', alpha=0.7)
-    plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
-             transform=plt.gca().transAxes, va='top')
-    plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
-             transform=plt.gca().transAxes, va='top')
-    plt.xlabel("Simulated FC")
-    plt.ylabel("Empirical FC")
-    plt.title("Stochastic linear FC-FC similarity")
-    plt.tight_layout()
-    plt.show()
+        mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
+
+        plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
+        x = np.array([0, 0.1])
+        # line = p * x + 0.4
+        # plt.plot(x, line, 'k--', alpha=0.7)
+        plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
+                 transform=plt.gca().transAxes, va='top')
+        plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
+                 transform=plt.gca().transAxes, va='top')
+        plt.xlabel("Simulated FC")
+        plt.ylabel("Empirical FC")
+        plt.title(f"{m} NLNMM and Empirical FC-FC correlation")
+        plt.tight_layout()
+
+        plt.savefig(
+            f"C:/Users/Johan/PycharmProjects/MPCAS_SOCS_Project_BrainNetworkModdeling/Figures/{m}nonLinear_FC_FC.png")
+        # plt.show()
 
 
 if __name__ == "__main__":
-    sim()
-    """sim_fMRI = np.fromfile(f"nln_sim_{99}.bin", dtype=float).reshape((4800, 246))
-    fMRI = dm.load_fMRI_data(99)
-    plt.plot(sim_fMRI[:,0])
-    plt.plot(fMRI[:,0])
-    plt.show()"""
-    #eval()
+    if RUN_SIMULATION:
+        sim()
+    if SHOW_TIME_SERIES:
+        sim_fMRI = np.fromfile(f"nln_sim_{99}.bin", dtype=float).reshape((4800, 246))
+        fMRI = dm.load_fMRI_data(99)
+        plt.plot(sim_fMRI[:,0])
+        plt.plot(fMRI[:,0])
+        plt.show()
+    if EVALUATE:
+        eval()
+

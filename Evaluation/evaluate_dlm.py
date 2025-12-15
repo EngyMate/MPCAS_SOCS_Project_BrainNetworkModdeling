@@ -2,7 +2,6 @@ from os.path import split
 
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.stats import pearsonr, spearmanr
 
 import data_management as dm
 import diffusion_model as dlm
@@ -14,14 +13,22 @@ import evaluation_tools as et
 
 MODIFIED = True
 
+plotting = False
+
 # -------------------------------------------------------------
 # MAIN SCRIPT
 # -------------------------------------------------------------
 
 if __name__ == "__main__":
     ############
-    individuals = 10
+    if MODIFIED:
+        individuals = 10
+    else:
+        individuals = 100
     ############
+    m = ""
+    if MODIFIED:
+        m = "SPI"
     #CHANGE THIS 1-100
     best_fitness, best_beta = dlm.get_best()
 
@@ -73,7 +80,7 @@ if __name__ == "__main__":
         # ------------------------------------------------------------------
         # Compute SC–FC correlations
         # ------------------------------------------------------------------
-        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = et.sc_fc_corr(SC, FC_emp)
+        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = et.sc_fc_corr(dm.load_DTI_data(i), FC_emp)
         pear_sim[i], p_sim[i], spear_sim[i], sp_sim[i], sc_vals_sim, fc_sim_vals = et.sc_fc_corr(SC, FC_sim)
 
         r_p, p_p, r_s, p_s = et.fc_fc_corr(FC_emp, FC_sim)
@@ -110,19 +117,29 @@ if __name__ == "__main__":
     p = pear_fc.mean()
     s = spear_fc.mean()
 
-    plt.figure(figsize=(6, 6))
-    mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
+    print(f"diffusion_pearson_{m}=[")
+    for p in pear_fc:
+        print(f"{p},")
+    print(f"]")
 
-    plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
-    x = np.array([0, 0.1])
-    #line = p * x + 0.4
-    #plt.plot(x, line, 'k--', alpha=0.7)
-    plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
-             transform=plt.gca().transAxes, va='top')
-    plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
-             transform=plt.gca().transAxes, va='top')
-    plt.xlabel("Simulated FC")
-    plt.ylabel("Empirical FC")
-    plt.title("Diffusion FC-FC similarity")
-    plt.tight_layout()
-    plt.show()
+
+    if plotting:
+        plt.figure(figsize=(6, 6))
+        mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
+
+        plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
+        x = np.array([0, 0.1])
+        #line = p * x + 0.4
+        #plt.plot(x, line, 'k--', alpha=0.7)
+        plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
+                 transform=plt.gca().transAxes, va='top')
+        plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
+                 transform=plt.gca().transAxes, va='top')
+        plt.xlabel("Simulated FC")
+        plt.ylabel("Empirical FC")
+
+        plt.title(f"{m} DLM and Empirical FC-FC correlation")
+        plt.tight_layout()
+
+        plt.savefig(f"C:/Users/Johan/PycharmProjects/MPCAS_SOCS_Project_BrainNetworkModdeling/Figures/{m}Diffusion_FC_FC.png")
+        #plt.show()

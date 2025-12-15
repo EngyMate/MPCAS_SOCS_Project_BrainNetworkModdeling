@@ -9,8 +9,8 @@ import evaluation_tools as et
 # -------------------------------------------------------------
 # HELPER FUNCTIONS
 # -------------------------------------------------------------
-
-
+MODIFIED = True
+fig = False
 # -------------------------------------------------------------
 # MAIN SCRIPT
 # -------------------------------------------------------------
@@ -19,11 +19,14 @@ if __name__ == "__main__":
 
     #CHANGE THIS
     ##############
-    individuals = 10
+    if MODIFIED:
+        individuals = 10
+    else:
+        individuals = 100
     ##############
-    MODIFIED = True
-
-
+    m = ""
+    if MODIFIED:
+        m = "SPI"
 
     # Retrieve best parameters for stochastic linear model
     best_fitness, best_alpha, best_beta = slm.get_best()
@@ -74,7 +77,7 @@ if __name__ == "__main__":
         # ------------------------------------------------------------------
         # Compute SC–FC correlations
         # ------------------------------------------------------------------
-        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = et.sc_fc_corr(SC, FC_emp)
+        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = et.sc_fc_corr(dm.load_DTI_data(i), FC_emp)
         pear_sim[i], p_sim[i], spear_sim[i], sp_sim[i], sc_vals_sim, fc_sim_vals = et.sc_fc_corr(SC, FC_sim)
 
         r_p, p_p, r_s, p_s = et.fc_fc_corr(FC_emp, FC_sim)
@@ -110,20 +113,31 @@ if __name__ == "__main__":
     p = pear_fc.mean()
     s = spear_fc.mean()
 
-    plt.figure(figsize=(6, 6))
+    print(f"stochastic_pearson_{m}=[")
+    for p in pear_fc:
+        print(f"{p},")
+    print(f"]")
 
-    mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
 
-    plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
-    x = np.array([0, 0.1])
-    #line = p * x + 0.4
-    #plt.plot(x, line, 'k--', alpha=0.7)
-    plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
-             transform=plt.gca().transAxes, va='top')
-    plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
-             transform=plt.gca().transAxes, va='top')
-    plt.xlabel("Simulated FC")
-    plt.ylabel("Empirical FC")
-    plt.title("Stochastic linear FC-FC similarity")
-    plt.tight_layout()
-    plt.show()
+    if fig:
+        plt.figure(figsize=(6, 6))
+
+        mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
+
+        plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
+        x = np.array([0, 0.1])
+        #line = p * x + 0.4
+        #plt.plot(x, line, 'k--', alpha=0.7)
+        plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
+                 transform=plt.gca().transAxes, va='top')
+        plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
+                 transform=plt.gca().transAxes, va='top')
+        plt.xlabel("Simulated FC")
+        plt.ylabel("Empirical FC")
+
+        plt.title(f"{m} SLM and Empirical FC-FC correlation")
+        plt.tight_layout()
+
+        plt.savefig(
+            f"C:/Users/Johan/PycharmProjects/MPCAS_SOCS_Project_BrainNetworkModdeling/Figures/{m}Stochastic_FC_FC.png")
+        # plt.show()
