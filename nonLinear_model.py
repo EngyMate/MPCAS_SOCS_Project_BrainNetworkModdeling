@@ -15,7 +15,7 @@ params = dict(
     aei=2.0, aie=2.0, aee=0.4, ane=1.0, ani=0.4,
     Iext=0.3, b=0.1, C=0.1, rNMDA=0.25,
     VT=0.0, d_V=0.65, ZT=0.0, d_Z=0.7,
-    QV_max=1.0, QZ_max=1.0, t_scale=1.0
+    QV_max=1.0, QZ_max=1.0, t_scale=1.2, kz=0.5
 )
 
 
@@ -67,8 +67,8 @@ def dfun(state_variables, num_nodes, i, coupling, local_coupling=0.0, p=params):
     QV = 0.5 * p['QV_max'] * (1 + np.tanh((V - p['VT']) / p['d_V']))
     QZ = 0.5 * p['QZ_max'] * (1 + np.tanh((Z - p['ZT']) / p['d_Z']))
 
-    QV_global = 0.5 * p['QV_max'] * (1 + np.tanh((V_all - p['VT']) / p['d_V']))
-    c_0 = coupling @ QV_global / num_nodes
+    QV_global = 0.5 * params['QV_max'] * (1 + np.tanh((V_all - params['VT']) / params['d_V']))
+    c_0 = coupling @ QV_global
     lc_0 = local_coupling * QV
 
     # Voltage derivative
@@ -85,7 +85,10 @@ def dfun(state_variables, num_nodes, i, coupling, local_coupling=0.0, p=params):
     derivative[1] = p['t_scale'] * p['phi'] * (m_K - W) / p['tau_K']
 
     # Inhibitory population
-    derivative[2] = p['t_scale'] * p['b'] * (p['ani'] * p['Iext'] + p['aei'] * V * QV)
+    derivative[2] = p['t_scale'] * p['b'] * (p['ani'] * p['Iext'] + p['aei'] * V * QV -p["kz"]*Z)
+
+    if V < -10:
+        print(f"V:{V}, W:{W}, Z:{Z}, dV:{derivative[0]}, DW{derivative[1]}, DZ{derivative[2]}")
 
     return derivative
 

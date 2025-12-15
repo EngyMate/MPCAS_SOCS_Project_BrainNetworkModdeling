@@ -1,3 +1,4 @@
+import math
 import time
 
 import numpy as np
@@ -25,13 +26,14 @@ def sim():
 
     #best_fitness, best_params = nlm.get_best()
 
-    t_span = (0, 4800 * 1.2)
-    t_eval = np.linspace(t_span[1] - 1000 * 1.2, t_span[1], 1000)
+    t_span = (0, 4800 * 1.2+1000)
+    t_eval = np.linspace(t_span[0], t_span[1], 4800+1000)
 
-    files_to_use = [0, 1, 2, 3, 4, 5]
-
+    #simulated files 0 to 51
+    files_to_use = range(99)
 
     for r in files_to_use:
+        print(r)
         SC = DTI_data[r]
 
         num_nodes = SC.shape[0]
@@ -45,43 +47,40 @@ def sim():
             noise_level=0.1
         )
         end_time = time.time()
-        print(f"simmulation running time: {start_time - end_time}")
+        print(f"simmulation running time: {end_time - start_time}")
 
         # Choose one simulated variable as simulated fMRI (e.g., V)
         sim_fMRI = V.transpose()  # ensure shape (timepoints, nodes)
-        sim_fMRI.tofile(f"nln_sim_{r}.bin")
+        sim_fMRI[-4800:, :].tofile(f"nln_sim_{r}.bin")
 
 def eval():
     individuals = 100
-    DTI_data = []
-    fMRI_data = []
+    files_to_use = range(52)
+    l = len(files_to_use)
+    pear_emp = 0
+    p_emp = 0
+    spear_emp = 0
+    sp_emp = 0
 
-    for i in range(individuals):
-        DTI_data.append(dm.load_DTI_data(i))  # SC matrix
-        fMRI_data.append(dm.load_fMRI_data(i))  # fMRI timeseries
+    pear_sim = 0
+    p_sim =0
+    spear_sim = 0
+    sp_sim = 0
 
-    pear_emp = np.zeros(individuals)
-    p_emp = np.zeros(individuals)
-    spear_emp = np.zeros(individuals)
-    sp_emp = np.zeros(individuals)
+    # Optional: store all SC-FC values per individual
+    sc_vals_all = np.zeros(246 * 246)
+    fc_emp_vals_all = np.zeros(246 * 246)
+    fc_sim_vals_all = np.zeros(246 * 246)
 
-    pear_sim = np.zeros(individuals)
-    p_sim = np.zeros(individuals)
-    spear_sim = np.zeros(individuals)
-    sp_sim = np.zeros(individuals)
-
-    files_to_use = [0, 1, 2, 3, 4, 5]
-    sim_fMRI = []
-
-    sc_vals_all = []
-    fc_emp_vals_all = []
-    fc_sim_vals_all = []
+    pear_fc = 0
+    spear_fc = 0
 
     for r in files_to_use:
-        sim_fMRI = np.fromfile(f"nln_sim_{r}.bin", dtype=float).reshape((1000, 246))
+        print(r)
+        sim_fMRI = np.fromfile(f"nln_sim_{r}.bin", dtype=float).reshape((4800, 246))
 
-        SC = DTI_data[r]
-        fMRI = fMRI_data[r]
+        SC = dm.load_DTI_data(r)
+        fMRI = dm.load_fMRI_data(r)
         # -------------------------------
         # Compute FC (empirical + simulated)
         # -------------------------------
@@ -92,44 +91,83 @@ def eval():
         # ------------------------------------------------------------------
         # Compute SC–FC correlations
         # ------------------------------------------------------------------
-        pear_emp[i], p_emp[i], spear_emp[i], sp_emp[i], sc_vals, fc_emp_vals = et.sc_fc_corr(SC, FC_empirical)
-        pear_sim[i], p_sim[i], spear_sim[i], sp_sim[i], sc_vals_sim, fc_sim_vals = et.sc_fc_corr(SC, FC_simulated)
+        pr, pb, sr, pb, sc, fc = et.sc_fc_corr(SC, FC_empirical)
+        pear_emp += pr
+        p_emp+= pb
+        spear_emp += sr
+        sp_emp += pb
 
+        pr, pb, sr, pb, sc, fc = et.sc_fc_corr(SC, FC_simulated)
+        pear_sim += pr
+        p_sim += pb
+        spear_sim += sr
+        sp_sim += pb
+
+        r_p, p_p, r_s, p_s = et.fc_fc_corr(FC_empirical, FC_simulated)
+
+        pear_fc += r_p
+        spear_fc += r_s
         # Store SC-FC values for plotting (optional: concatenate across individuals)
-        sc_vals_all.extend(sc_vals)
-        fc_emp_vals_all.extend(fc_emp_vals)
-        fc_sim_vals_all.extend(fc_sim_vals)
+        sc_vals_all += SC.flatten()
+        fc_emp_vals_all += FC_empirical.flatten()
+        fc_sim_vals_all += FC_simulated.flatten()
 
-        # Compute average correlations across individuals
+    sc_vals_all /= l
+    fc_emp_vals_all /= l
+    fc_sim_vals_all /= l
+
+    pear_emp /= l
+    p_emp /= l
+    spear_emp /= l
+    sp_emp /= l
+    pear_sim /= l
+    p_sim /= l
+    spear_sim /= l
+    sp_sim /= l
+
+    pear_fc /= l
+    spear_fc /= l
+
+    # Compute average correlations across individuals
     print("\n===== Empirical SC–FC =====")
-    print("Pearson:  mean r =", pear_emp.mean(), " mean p =", p_emp.mean())
-    print("Spearman: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
+    print("Pearson:  mean r =", pear_emp, " mean p =", p_emp)
+    print("Spearman: mean r =", spear_emp, " mean p =", sp_emp)
 
     print("\n===== Simulated SC–FC =====")
-    print("Pearson:  mean r =", pear_sim.mean(), " mean p =", p_sim.mean())
-    print("Spearman: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
+    print("Pearson:  mean r =", pear_sim, " mean p =", p_sim)
+    print("Spearman: mean r =", spear_sim, " mean p =", sp_sim)
 
     # ------------------------------------------------------------------
     # Scatterplot: Simulated FC vs Empirical FC
     # ------------------------------------------------------------------
+
+    p = pear_fc.mean()
+    s = spear_fc.mean()
+
     plt.figure(figsize=(6, 6))
 
-    # Scatter: each point is a connection (across all individuals)
-    plt.scatter(fc_sim_vals_all, fc_emp_vals_all, s=3, alpha=0.3, color='blue')
+    mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
 
-    # Linear fit
-    coeff = np.polyfit(fc_sim_vals_all, fc_emp_vals_all, 1)  # y = m*x + b
-    fit_line = np.polyval(coeff, fc_sim_vals_all)
-    plt.plot(fc_sim_vals_all, fit_line, color='red', linewidth=2, label=f'Slope: {coeff[0]:.8f}')
-
-    plt.title("Diffusion model FC vs Empirical FC ")
-    plt.xlabel("Simulated Functional Connectivity")
-    plt.ylabel("Empirical Functional Connectivity")
-    plt.legend()
-    plt.grid(alpha=0.3)
+    plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
+    x = np.array([0, 0.1])
+    # line = p * x + 0.4
+    # plt.plot(x, line, 'k--', alpha=0.7)
+    plt.text(0.05, 0.95, f"Pearson r = {p:.3f}",
+             transform=plt.gca().transAxes, va='top')
+    plt.text(0.05, 0.90, f"Spearman r = {s:.3f}",
+             transform=plt.gca().transAxes, va='top')
+    plt.xlabel("Simulated FC")
+    plt.ylabel("Empirical FC")
+    plt.title("Stochastic linear FC-FC similarity")
     plt.tight_layout()
     plt.show()
 
+
 if __name__ == "__main__":
     sim()
+    """sim_fMRI = np.fromfile(f"nln_sim_{99}.bin", dtype=float).reshape((4800, 246))
+    fMRI = dm.load_fMRI_data(99)
+    plt.plot(sim_fMRI[:,0])
+    plt.plot(fMRI[:,0])
+    plt.show()"""
     #eval()
