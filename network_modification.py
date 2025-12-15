@@ -186,20 +186,20 @@ def clustering_coefficient(A):
 
     return C
 
-def show(file):
+def show(file=0, file_numbers = 100):
         connections =np.fromfile("data/Modified_DTI/connections.bin", dtype=float).reshape((2,100))
-        cc =np.fromfile("data/Modified_DTI/cc.bin", dtype=float).reshape((2,100))
+        cc = np.fromfile("data/Modified_DTI/cc.bin", dtype=float).reshape((2,100))
         total_degree=np.fromfile("data/Modified_DTI/total_degree.bin", dtype=float).reshape((2,100))
         avg_degree=np.fromfile("data/Modified_DTI/avg_degree.bin", dtype=float).reshape((2,100))
         diameter=np.fromfile("data/Modified_DTI/diameter.bin", dtype=float).reshape((2,100))
         mean_path_length=np.fromfile("data/Modified_DTI/mean_path_length.bin", dtype=float).reshape((2,100))
 
-        print(f"connections:{connections[0,:].mean()} connections rewired:{connections[1,:].mean()}")
-        print(f"clustering_coefficient:{cc[0,:].mean()} clustering_coefficient rewired: {cc[1,:].mean()}")
-        print(f"total degree: {total_degree[0,:].mean()} total degree rewired: {total_degree[1,:].mean()}")
-        print(f"avg degree: {avg_degree[0,:].mean()} avg degree rewired: {avg_degree[1,:].mean()}")
-        print(f"Diameter:{diameter[0,:].mean()} Diameter rewired: {diameter[1,:].mean()}")
-        print(f"Mean path length:{mean_path_length[0,:].mean()} Mean path length rewired: {mean_path_length[1,:].mean()}")
+        print(f"connections:{connections[0,:].sum()/file_numbers} connections rewired:{connections[1,:].sum()/file_numbers}")
+        print(f"clustering_coefficient:{cc[0,:].sum()/file_numbers} clustering_coefficient rewired: {cc[1,:].sum()/file_numbers}")
+        print(f"total degree: {total_degree[0,:].sum()/file_numbers} total degree rewired: {total_degree[1,:].sum()/file_numbers}")
+        print(f"avg degree: {avg_degree[0,:].sum()/file_numbers} avg degree rewired: {avg_degree[1,:].sum()/file_numbers}")
+        print(f"Diameter:{diameter[0,:].sum()/file_numbers} Diameter rewired: {diameter[1,:].sum()/file_numbers}")
+        print(f"Mean path length:{mean_path_length[0,:].sum()/file_numbers} Mean path length rewired: {mean_path_length[1,:].sum()/file_numbers}")
 
         individuals = [ind for ind in range(100)]
 
@@ -212,10 +212,11 @@ def show(file):
         plt.legend()
         plt.title("CC and MPL of actial and shortest path ideal connectome")
         plt.show()
+        N = 246
 
-        new_C = np.fromfile(f"data/Modified_DTI/mDTI_individual_{file}.bin")
+        new_C = np.fromfile(f"data/Modified_DTI/mDTI_individual_{file}.bin").reshape((N, N))
         C = dm.load_DTI_data(file)
-        N=246
+
         # Circular layout
         theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
 
@@ -249,8 +250,7 @@ def show(file):
         plt.title("Unchanged (black), removed (red) and added (green) Edges")
         plt.show()
 
-def calc():
-
+def calc(files):
 
     connections = np.zeros((2, 100))
     cc = np.zeros((2, 100))
@@ -260,7 +260,7 @@ def calc():
     mean_path_length = np.zeros((2, 100))
 
     coordinates = extract_coord()
-    for i in range(100):
+    for i in range(files):
         print(i)
         C = data_management.load_DTI_data(i)
 
@@ -318,7 +318,8 @@ def calc():
     mean_path_length.tofile("data/Modified_DTI/mean_path_length.bin")
 
 if __name__ == "__main__":
-    calc()
+    calc(10)
+    #show(0)
 
 
 
