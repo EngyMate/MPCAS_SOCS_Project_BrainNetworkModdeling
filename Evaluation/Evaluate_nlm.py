@@ -14,19 +14,19 @@ import evaluation_tools as et
 # ---------------------------------------------------------
 # --- CONTINUE FROM YOUR SCRIPT ---------------------------
 # ---------------------------------------------------------
-MODIFIED = True
+MODIFIED = False
 
-RUN_SIMULATION = False
+RUN_SIMULATION = True
 SHOW_TIME_SERIES = False
-EVALUATE = True
-PLOT = True
+EVALUATE = False
+PLOT = False
 
 
 def sim():
     if MODIFIED:
         individuals = 10
     else:
-        individuals = 50
+        individuals = 100
 
     DTI_data = []
     fMRI_data = []
@@ -44,7 +44,7 @@ def sim():
     t_eval = np.linspace(t_span[0], t_span[1], 4800+1000)
 
     #simulated files 0 to 51
-    files_to_use = range(individuals)
+    files_to_use = range(52, individuals)
 
     for r in files_to_use:
         print(r)

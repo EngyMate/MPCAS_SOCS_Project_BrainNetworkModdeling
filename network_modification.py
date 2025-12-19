@@ -367,8 +367,8 @@ def calc(files):
     mean_path_length.tofile("data/Modified_DTI/mean_path_length.bin")
 
 if __name__ == "__main__":
-    #calc(10)
-    show(0, file_numbers=10)
+    calc(100)
+    #show(0, file_numbers=10)
 
 
 
