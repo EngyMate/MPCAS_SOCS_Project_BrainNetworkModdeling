@@ -51,13 +51,14 @@ def nodewise_diffusion(C, beta, t):
     L = np.eye(C.shape[0]) - D_inv_sqrt @ C @ D_inv_sqrt
 
     C_f = expm(-beta * L * t)
-
-    return C_f
+    FC = np.array(C_f)
+    FC = (FC - FC.mean()) / FC.std()
+    return FC
 
 
 def init_files():
     np.array([0]).tofile("optimization/dlm_best_fitness.bin")
-    np.array([0]).tofile("optimization/dlm_best_param.bin")
+    np.array([0]).tofile("optimization/dlm_best_beta.bin")
 
 def compute_best_beta_fast(individuals, C, actual_activity, beta_range, times, u0=None):
     """
@@ -112,38 +113,45 @@ def compute_best_beta(individuals, C, actual_activity, beta_range, times, u0=Non
     N = C[0].shape[0]
 
     best_fitness = np.fromfile("dlm_best_fitness.bin", dtype=float)[0]
-    best_beta = np.fromfile("dlm_best_param.bin", dtype=float)[0]
+    best_beta = np.fromfile("dlm_best_beta.bin", dtype=float)[0]
     best_sim = None
 
     # For all β values, simulate cheaply
     for beta in beta_range:
         for t in times:
+            fitness  = 0
             print(f"beta:{beta}")
             for i in range(individuals):
                 c_f = nodewise_diffusion(C[i], beta, t)
-                et.compute_fc(c_f)
+                emp = et.compute_fc(actual_activity[i])
                 r_p, p_p, r_s, p_s, sc_vals, fc_vals = et.sc_fc_corr(C[i], c_f)
-                fitness = r_p
+                r_p, p_p, r_s, p_s = et.fc_fc_corr(emp, c_f)
+                fitness += r_p
 
             if fitness > best_fitness:
                 best_beta = beta
                 np.array([best_beta]).tofile("dlm_best_beta.bin")
                 best_fitness = fitness
-                np.array([best_fitness]).tofile("dlm_best_fitness.bin")
+                np.array([float(best_fitness)]).tofile("dlm_best_fitness.bin")
+                print(f"New best found! best_fitness:{best_fitness}, best_beta:{best_beta}")
 
     return best_beta, best_fitness, best_sim
 
 
 def get_best():
     best_fitness = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\dlm_best_fitness.bin", dtype=float)[0]
-    best_beta = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\dlm_best_param.bin", dtype=float)[0]
+    best_beta = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\dlm_best_beta.bin", dtype=float)[0]
     print(f"best_fitness:{best_fitness}, best_beta:{best_beta}")
     return best_fitness, best_beta
 
 # Example usage
 if __name__ == "__main__":
+
+    init_files()
+    #best_fitness, best_beta = get_best()
     # Example symmetric connectome matrix
-    C = np.array([[0, 1, 2],
+
+    """C = np.array([[0, 1, 2],
                   [1, 0, 3],
                   [2, 3, 0]], dtype=float)
 
@@ -153,5 +161,5 @@ if __name__ == "__main__":
     times = np.arange(0, 4800)
     u = nodewise_diffusion_timeseries_fast(evals, evecs, 0.1, times)
     plt.plot(u)
-    plt.show()
+    plt.show()"""
 

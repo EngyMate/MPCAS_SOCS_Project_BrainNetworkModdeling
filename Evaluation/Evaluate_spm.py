@@ -1,36 +1,32 @@
-from os.path import split
-
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.stats import pearsonr, spearmanr
 
 import data_management as dm
-import diffusion_model as dlm
+import shortest_path as spm
 import evaluation_tools as et
 
 # -------------------------------------------------------------
 # HELPER FUNCTIONS
 # -------------------------------------------------------------
-
 MODIFIED = False
-
-plotting = True
-
+fig = True
 # -------------------------------------------------------------
 # MAIN SCRIPT
 # -------------------------------------------------------------
 
 if __name__ == "__main__":
-    ############
+
+    ##############
     if MODIFIED:
         individuals = 10
     else:
         individuals = 100
-    ############
+    ##############
     m = ""
     if MODIFIED:
         m = "SPI"
-    #CHANGE THIS 1-100
-    best_fitness, best_beta = dlm.get_best()
+
 
     # Initialize arrays for storing results per individual
     pear_emp = np.zeros(individuals)
@@ -43,31 +39,33 @@ if __name__ == "__main__":
     spear_sim = np.zeros(individuals)
     sp_sim = np.zeros(individuals)
 
+    best_fitness, best_alpha = spm.get_best()
+
     # Optional: store all SC-FC values per individual
-    sc_vals_all = np.zeros(246*246)
-    fc_emp_vals_all = np.zeros(246*246)
-    fc_sim_vals_all = np.zeros(246*246)
+    sc_vals_all = np.zeros(246 * 246)
+    fc_emp_vals_all = np.zeros(246 * 246)
+    fc_sim_vals_all = np.zeros(246 * 246)
 
     pear_fc = np.zeros(individuals)
     spear_fc = np.zeros(individuals)
+
     # Load structural and functional data
     for i in range(individuals):
-        print(i)
         #CHANGE THIS
-        ######
+        ##############
         if not MODIFIED:
             SC = dm.load_DTI_data(i)
         else:
             SC = dm.load_mDTI_data(i)
-        ######
+        #############
+
         fMRI = dm.load_fMRI_data(i)
-
-        num_nodes = SC.shape[0]
-
-        # ---------------------------------------------------------------
-        # Simulate diffusion model timeseries: shape = (T, nodes)
-        # ---------------------------------------------------------------
-        FC_sim = dlm.nodewise_diffusion(SC,best_beta, 1)
+        N = SC.shape[0]
+        # ------------------------------------------------------------------
+        # Simulate stochastic linear model (returns timeseries u)
+        # shape should be (timepoints, nodes)
+        # ------------------------------------------------------------------
+        FC_sim = spm.shortest_path_model(SC, best_alpha)
 
         # ------------------------------------------------------------------
         # Compute FC: empirical & simulated
@@ -84,7 +82,6 @@ if __name__ == "__main__":
 
         pear_fc[i] = r_p
         spear_fc[i] = r_s
-
         # Store SC-FC values for plotting (optional: concatenate across individuals)
         sc_vals_all += SC.flatten()
         fc_emp_vals_all += FC_emp.flatten()
@@ -115,8 +112,9 @@ if __name__ == "__main__":
     s = spear_fc.mean()
 
 
-    if plotting:
+    if fig:
         plt.figure(figsize=(6, 6))
+
         mask = (fc_sim_vals_all < 1) & (fc_emp_vals_all < 1)
 
         plt.scatter(fc_sim_vals_all[mask], fc_emp_vals_all[mask], s=1)
@@ -130,8 +128,9 @@ if __name__ == "__main__":
         plt.xlabel("Simulated FC")
         plt.ylabel("Empirical FC")
 
-        plt.title(f"{m} DLM and Empirical FC-FC correlation")
+        plt.title(f"{m} SPM and Empirical FC-FC correlation")
         plt.tight_layout()
 
-        plt.savefig(f"C:/Users/Johan/PycharmProjects/MPCAS_SOCS_Project_BrainNetworkModdeling/Figures/{m}Diffusion_FC_FC.png")
+        plt.savefig(
+            f"C:/Users/Johan/PycharmProjects/MPCAS_SOCS_Project_BrainNetworkModdeling/Figures/{m}shortest_path_FC_FC.png")
         #plt.show()

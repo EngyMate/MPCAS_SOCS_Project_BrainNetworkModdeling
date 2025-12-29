@@ -26,7 +26,6 @@ def simulate_linear_model(C, alpha, beta, n_steps=1000, noise_std=1.0, seed=None
 
     # Normalize A to have unit norm for stability
     A = A / np.linalg.norm(A)
-
     # Initialize u
     u = np.zeros((n_steps, N))
     noise = np.random.normal(0, noise_std, size=(n_steps, N))
@@ -38,12 +37,6 @@ def simulate_linear_model(C, alpha, beta, n_steps=1000, noise_std=1.0, seed=None
 
     return u
 
-
-def compute_functional_connectivity(u):
-    """
-    Compute functional connectivity as correlation matrix
-    """
-    return np.corrcoef(u)
 
 
 def init_files():

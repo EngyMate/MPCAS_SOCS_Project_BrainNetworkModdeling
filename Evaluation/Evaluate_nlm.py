@@ -24,7 +24,7 @@ PLOT = False
 
 def sim():
     if MODIFIED:
-        individuals = 10
+        individuals = 100
     else:
         individuals = 100
 
@@ -38,13 +38,7 @@ def sim():
             DTI_data.append(dm.load_mDTI_data(i))  # SC matrix
         fMRI_data.append(dm.load_fMRI_data(i))  # fMRI timeseries
 
-    #best_fitness, best_params = nlm.get_best()
-
-    t_span = (0, 4800 * 1.2+1000)
-    t_eval = np.linspace(t_span[0], t_span[1], 4800+1000)
-
-    #simulated files 0 to 51
-    files_to_use = range(52, individuals)
+    files_to_use = range(individuals)
 
     for r in files_to_use:
         print(r)
@@ -53,28 +47,21 @@ def sim():
         num_nodes = SC.shape[0]
         start_time = time.time()
 
-        V, W, Z, t_eval = nlm.simulate_network(
-            num_nodes,
-            t_span,
-            t_eval,
-            connectome_matrix=SC,
-            noise_level=0.1
-        )
+        last_BOLD, t_eval = nlm.bold_simulate(SC, nlm.params, time_max = 4800, initial = 100, noise_level= 0.01)
         end_time = time.time()
         print(f"simmulation running time: {end_time - start_time}")
 
         # Choose one simulated variable as simulated fMRI (e.g., V)
-        sim_fMRI = V.transpose()  # ensure shape (timepoints, nodes)
         if not MODIFIED:
-            sim_fMRI[-4800:, :].tofile(f"nln_sim_{r}.bin")
+            last_BOLD[-4800:, :].tofile(f"nln_sim_{r}.bin")
         else:
-            sim_fMRI[-4800:, :].tofile(f"modified_nln_sim_{r}.bin")
+            last_BOLD[-4800:, :].tofile(f"modified_nln_sim_{r}.bin")
 
 def eval():
     if MODIFIED:
-        individuals = 10
+        individuals = 100
     else:
-        individuals = 50
+        individuals = 100
 
     m = ""
     if MODIFIED:
