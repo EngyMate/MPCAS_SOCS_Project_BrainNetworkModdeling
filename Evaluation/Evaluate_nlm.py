@@ -196,6 +196,7 @@ def eval():
 
 if __name__ == "__main__":
     if RUN_SIMULATION:
+        #29 ? todo = error?
         sim()
     if SHOW_TIME_SERIES:
         sim_fMRI = np.fromfile(f"nln_sim_{99}.bin", dtype=float).reshape((4800, 246))
