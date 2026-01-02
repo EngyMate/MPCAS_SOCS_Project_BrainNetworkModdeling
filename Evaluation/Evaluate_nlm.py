@@ -14,7 +14,7 @@ import evaluation_tools as et
 # ---------------------------------------------------------
 # --- CONTINUE FROM YOUR SCRIPT ---------------------------
 # ---------------------------------------------------------
-MODIFIED = False
+MODIFIED = True
 
 RUN_SIMULATION = True
 SHOW_TIME_SERIES = False
@@ -166,10 +166,6 @@ def eval():
     p = pear_fc
     s = spear_fc
 
-    print(f"nonLinear_pearson_{m}=[")
-    for p in person_arr:
-        print(f"{p},")
-    print(f"]")
 
     if PLOT:
         plt.figure(figsize=(6, 6))

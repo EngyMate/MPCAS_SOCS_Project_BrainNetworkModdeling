@@ -1,1 +1,14 @@
 git clone "https://github.com/braph-software/BRAPH-2.git" "C:\Users\Johan\PycharmProjects\MPCAS_SOCS_Project_BrainNetworkModdeling\BRAPH-2"
+
+
+===== Empirical SC–FC =====
+Pearson:  mean r = 0.17413835660172977  mean p = 8.134290443549352e-73
+Spearman: mean r = 0.1328175134582431  mean p = 8.134290443549352e-73
+
+===== Simulated SC–FC =====
+Pearson:  mean r = 0.26889538824025666  mean p = 3.2367546571415027e-156
+Spearman: mean r = 0.25282566077698176  mean p = 3.2367546571415027e-156
+
+===== SC–SC =====
+Pearson:  mean r = 0.13382683475488402  mean p = 3.2367546571415027e-156
+Spearman: mean r = 0.11300939730468133  mean p = 3.2367546571415027e-156
