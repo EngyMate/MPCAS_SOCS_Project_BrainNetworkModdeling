@@ -1,0 +1,54 @@
+DLM:
+===== Empirical SC–FC =====
+Pearson:  mean r = 0.17413835660172974  mean p = 2.074514546455465e-111
+Spearman: mean r = 0.1328175134582431  mean p = 8.134290443549352e-73
+
+===== Simulated SC–FC =====
+Pearson:  mean r = 0.7609548127681937  mean p = 0.0
+Spearman: mean r = 0.5425270758657667  mean p = 0.0
+
+===== SC–SC =====
+Pearson:  mean r = 0.19854471517909064  mean p = 0.0
+Spearman: mean r = 0.11119978472891896  mean p = 0.0
+
+NLM:
+===== Empirical SC–FC =====
+Pearson:  mean r = 0.17733493654543214  mean p = 2.5565020122496867e-71
+Spearman: mean r = 0.1344254024432225  mean p = 2.5565020122496867e-71
+
+===== Simulated SC–FC =====
+Pearson:  mean r = 0.19206168927066902  mean p = 2.5127665601085515e-72
+Spearman: mean r = 0.21461299099377268  mean p = 2.5127665601085515e-72
+
+===== SC–SC =====
+Pearson:  mean r = 0.0692244229118914  mean p = 2.5127665601085515e-72
+Spearman: mean r = 0.07477771376330097  mean p = 2.5127665601085515e-72
+
+RWM:
+===== Empirical SC–FC =====
+Pearson:  mean r = 0.17413835660172974  mean p = 2.074514546455465e-111
+Spearman_values: mean r = 0.1328175134582431  mean p = 8.134290443549352e-73
+
+===== Simulated SC–FC =====
+Pearson:  mean r = 0.0003839859394575755  mean p = 0.5080295171905168
+Spearman_values: mean r = 0.0003255404813917079  mean p = 0.48353173844104846
+
+===== SC–SC =====
+Pearson:  mean r = -4.2311917600234425e-05  mean p = 0.5080295171905168
+Spearman_values: mean r = -0.00018809749310109424  mean p = 0.48353173844104846
+
+SLM:
+
+
+SPM:
+===== Empirical SC–FC =====
+Pearson:  mean r = 0.17413835660172974  mean p = 2.074514546455465e-111
+Spearman: mean r = 0.1328175134582431  mean p = 8.134290443549352e-73
+
+===== Simulated SC–FC =====
+Pearson:  mean r = 0.9366253512255628  mean p = 0.0
+Spearman: mean r = 0.5514074408843456  mean p = 0.0
+
+===== SC–SC =====
+Pearson:  mean r = 0.187192148897851  mean p = 0.0
+Spearman: mean r = 0.11613692506160744  mean p = 0.0

@@ -9,7 +9,7 @@ import evaluation_tools as et
 # -------------------------------------------------------------
 # HELPER FUNCTIONS
 # -------------------------------------------------------------
-MODIFIED = False
+MODIFIED = True
 fig = True
 # -------------------------------------------------------------
 # MAIN SCRIPT
@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     ##############
     if MODIFIED:
-        individuals = 10
+        individuals = 100
     else:
         individuals = 100
     ##############
@@ -92,18 +92,26 @@ if __name__ == "__main__":
     fc_emp_vals_all /= individuals
     fc_sim_vals_all /= individuals
 
+    pear_emp.tofile(f"Pearson_values/emp.bin")
+    pear_fc.tofile(f"Pearson_values/rwm_fc_{m}.bin")
+    pear_sim.tofile(f"Pearson_values/rwm_sim_{m}.bin")
+
+    spear_emp.tofile(f"Spearman_values/emp.bin")
+    spear_fc.tofile(f"Spearman_values/rwm_fc_{m}.bin")
+    spear_sim.tofile(f"Spearman_values/rwm_sim_{m}.bin")
+
     # Compute average correlations across individuals
     print("\n===== Empirical SC–FC =====")
     print("Pearson:  mean r =", pear_emp.mean(), " mean p =", p_emp.mean())
-    print("Spearman: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
+    print("Spearman_values: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
 
     print("\n===== Simulated SC–FC =====")
     print("Pearson:  mean r =", pear_sim.mean(), " mean p =", p_sim.mean())
-    print("Spearman: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
+    print("Spearman_values: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
 
     print("\n===== SC–SC =====")
     print("Pearson:  mean r =", pear_fc.mean(), " mean p =", p_sim.mean())
-    print("Spearman: mean r =", spear_fc.mean(), " mean p =", sp_sim.mean())
+    print("Spearman_values: mean r =", spear_fc.mean(), " mean p =", sp_sim.mean())
 
     # ------------------------------------------------------------------
     # Scatterplot: Simulated FC vs Empirical FC
@@ -123,7 +131,7 @@ if __name__ == "__main__":
         #plt.plot(x, line, 'k--', alpha=0.7)
         plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
                  transform=plt.gca().transAxes, va='top')
-        plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
+        plt.text(0.05, 0.90, f"Spearman_values r = {s:.5f}",
                  transform=plt.gca().transAxes, va='top')
         plt.xlabel("Simulated FC")
         plt.ylabel("Empirical FC")

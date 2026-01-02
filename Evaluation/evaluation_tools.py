@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Compute average correlations across individuals
     print("\n===== Empirical SC–FC =====")
     print("Pearson:  mean r =", pear_emp.mean(), " mean p =", p_emp.mean())
-    print("Spearman: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
+    print("Spearman_values: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
 
     # ------------------------------------------------------------------
     # Scatterplots: SC vs FC with linear fit (all individuals combined)

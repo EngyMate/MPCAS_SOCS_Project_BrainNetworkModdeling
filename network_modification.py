@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import data_management
 import data_management as dm
 
-PLOT = False
+PLOT = True
 
 """
 The algorithm should work in the follwing way: 
@@ -258,7 +258,7 @@ def show(file=0, file_numbers = 100):
             fig.suptitle("CC and MPL of Actual and Shortest Path Ideal (SPI) Connectome")
 
             plt.tight_layout(rect=[0, 0, 1, 0.95])
-            plt.show()
+            plt.savefig("Figures/100_individuals_change.png")
 
             N = 246
 
@@ -296,7 +296,8 @@ def show(file=0, file_numbers = 100):
 
             plt.axis('off')
             plt.title("Unchanged (black), removed (red) and added (green) Edges")
-            plt.savefig("Figures/modification_to_SC.png", transparent=True)
+            plt.savefig("Figures/modification_to_SC_t.png", transparent=True)
+            plt.savefig("Figures/modification_to_SC.png")
             #plt.show()
 
 def calc(files):
@@ -367,8 +368,8 @@ def calc(files):
     mean_path_length.tofile("data/Modified_DTI/mean_path_length.bin")
 
 if __name__ == "__main__":
-    calc(100)
-    #show(0, file_numbers=10)
+    #calc(100)
+    show(0, file_numbers=100)
 
 
 

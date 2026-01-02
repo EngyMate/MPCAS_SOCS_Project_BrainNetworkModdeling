@@ -16,10 +16,10 @@ import evaluation_tools as et
 # ---------------------------------------------------------
 MODIFIED = True
 
-RUN_SIMULATION = True
+RUN_SIMULATION = False
 SHOW_TIME_SERIES = False
-EVALUATE = False
-PLOT = False
+EVALUATE = True
+PLOT = True
 
 
 def sim():
@@ -69,15 +69,16 @@ def eval():
 
     files_to_use = range(individuals)
     l = len(files_to_use)
-    pear_emp = 0
-    p_emp = 0
-    spear_emp = 0
-    sp_emp = 0
+    # Initialize arrays for storing results per individual
+    pear_emp = np.zeros(individuals)
+    p_emp = np.zeros(individuals)
+    spear_emp = np.zeros(individuals)
+    sp_emp = np.zeros(individuals)
 
-    pear_sim = 0
-    p_sim =0
-    spear_sim = 0
-    sp_sim = 0
+    pear_sim = np.zeros(individuals)
+    p_sim = np.zeros(individuals)
+    spear_sim = np.zeros(individuals)
+    sp_sim = np.zeros(individuals)
 
     # Optional: store all SC-FC values per individual
     sc_vals_all = np.zeros(246 * 246)
@@ -85,16 +86,16 @@ def eval():
     fc_sim_vals_all = np.zeros(246 * 246)
     person_arr = np.zeros(individuals)
 
-    pear_fc = 0
-    spear_fc = 0
+    pear_fc = np.zeros(individuals)
+    spear_fc = np.zeros(individuals)
 
     for r in files_to_use:
         print(r)
         if not MODIFIED:
-            sim_fMRI = np.fromfile(f"nln_sim_{r}.bin", dtype=float).reshape((4800, 246))
+            sim_fMRI = np.fromfile(f"act_sim_nlm/nln_sim_{r}.bin", dtype=float).reshape((4800, 246))
             SC = dm.load_DTI_data(r)
         else:
-            sim_fMRI = np.fromfile(f"modified_nln_sim_{r}.bin", dtype=float).reshape((4800, 246))
+            sim_fMRI = np.fromfile(f"sip_sim_nlm/modified_nln_sim_{r}.bin", dtype=float).reshape((4800, 246))
             SC = dm.load_mDTI_data(r)
 
 
@@ -103,68 +104,54 @@ def eval():
         # Compute FC (empirical + simulated)
         # -------------------------------
 
-        FC_empirical = et.compute_fc(fMRI)
-        FC_simulated = et.compute_fc(sim_fMRI)
+        FC_emp = et.compute_fc(fMRI)
+        FC_sim = et.compute_fc(sim_fMRI)
 
         # ------------------------------------------------------------------
         # Compute SC–FC correlations
         # ------------------------------------------------------------------
-        pr, pb, sr, pb, sc, fc = et.sc_fc_corr(SC, FC_empirical)
-        pear_emp += pr
-        p_emp+= pb
-        spear_emp += sr
-        sp_emp += pb
+        pear_emp[r], p_emp[r], spear_emp[r], sp_emp[r], sc_vals, fc_emp_vals = et.sc_fc_corr(dm.load_DTI_data(r),FC_emp)
+        pear_sim[r], p_sim[r], spear_sim[r], sp_sim[r], sc_vals_sim, fc_sim_vals = et.sc_fc_corr(SC, FC_sim)
 
-        pr, pb, sr, pb, sc, fc = et.sc_fc_corr(SC, FC_simulated)
-        pear_sim += pr
-        p_sim += pb
-        spear_sim += sr
-        sp_sim += pb
+        r_p, p_p, r_s, p_s = et.fc_fc_corr(FC_emp, FC_sim)
 
-        r_p, p_p, r_s, p_s = et.fc_fc_corr(FC_empirical, FC_simulated)
-
-        person_arr[r] = r_p
-        pear_fc += r_p
-        spear_fc += r_s
+        pear_fc[r] = r_p
+        spear_fc[r] = r_s
         # Store SC-FC values for plotting (optional: concatenate across individuals)
         sc_vals_all += SC.flatten()
-        fc_emp_vals_all += FC_empirical.flatten()
-        fc_sim_vals_all += FC_simulated.flatten()
+        fc_emp_vals_all += FC_emp.flatten()
+        fc_sim_vals_all += FC_sim.flatten()
 
-    sc_vals_all /= l
-    fc_emp_vals_all /= l
-    fc_sim_vals_all /= l
+    sc_vals_all /= individuals
+    fc_emp_vals_all /= individuals
+    fc_sim_vals_all /= individuals
 
-    pear_emp /= l
-    p_emp /= l
-    spear_emp /= l
-    sp_emp /= l
-    pear_sim /= l
-    p_sim /= l
-    spear_sim /= l
-    sp_sim /= l
+    pear_emp.tofile(f"Pearson_values/emp.bin")
+    pear_fc.tofile(f"Pearson_values/nlm_fc_{m}.bin")
+    pear_sim.tofile(f"Pearson_values/nlm_sim_{m}.bin")
 
-    pear_fc /= l
-    spear_fc /= l
+    spear_emp.tofile(f"Spearman_values/emp.bin")
+    spear_fc.tofile(f"Spearman_values/nlm_fc_{m}.bin")
+    spear_sim.tofile(f"Spearman_values/nlm_sim_{m}.bin")
 
     # Compute average correlations across individuals
     print("\n===== Empirical SC–FC =====")
-    print("Pearson:  mean r =", pear_emp, " mean p =", p_emp)
-    print("Spearman: mean r =", spear_emp, " mean p =", sp_emp)
+    print("Pearson:  mean r =", pear_emp.mean(), " mean p =", p_emp.mean())
+    print("Spearman_values: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
 
     print("\n===== Simulated SC–FC =====")
-    print("Pearson:  mean r =", pear_sim, " mean p =", p_sim)
-    print("Spearman: mean r =", spear_sim, " mean p =", sp_sim)
+    print("Pearson:  mean r =", pear_sim.mean(), " mean p =", p_sim.mean())
+    print("Spearman_values: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
 
     print("\n===== SC–SC =====")
-    print("Pearson:  mean r =", pear_fc, " mean p =", p_sim)
-    print("Spearman: mean r =", spear_fc, " mean p =", sp_sim)
+    print("Pearson:  mean r =", pear_fc.mean(), " mean p =", p_sim.mean())
+    print("Spearman_values: mean r =", spear_fc.mean(), " mean p =", sp_sim.mean())
     # ------------------------------------------------------------------
     # Scatterplot: Simulated FC vs Empirical FC
     # ------------------------------------------------------------------
 
-    p = pear_fc
-    s = spear_fc
+    p = pear_fc.mean()
+    s = spear_fc.mean()
 
 
     if PLOT:
@@ -178,7 +165,7 @@ def eval():
         # plt.plot(x, line, 'k--', alpha=0.7)
         plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
                  transform=plt.gca().transAxes, va='top')
-        plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
+        plt.text(0.05, 0.90, f"Spearman_values r = {s:.5f}",
                  transform=plt.gca().transAxes, va='top')
         plt.xlabel("Simulated FC")
         plt.ylabel("Empirical FC")

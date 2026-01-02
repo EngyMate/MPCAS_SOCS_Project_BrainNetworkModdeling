@@ -41,17 +41,21 @@ def simulate_linear_model(C, alpha, beta, n_steps=1000, noise_std=1.0, seed=None
 
 def init_files():
     np.array([0]).tofile("optimization/slm_best_fitness.bin")
-    np.array([0, 0]).tofile("optimization/slm_best_param.bin")
+    np.array([0, 0, 0]).tofile("optimization/slm_best_param.bin")
 
 def get_best():
     best_fitness = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\slm_best_fitness.bin", dtype=float)[0]
     best_alpha = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\slm_best_param.bin", dtype=float)[0]
     best_beta = np.fromfile("C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\slm_best_param.bin", dtype=float)[1]
-    print(f"best_fitness:{best_fitness}, best_alpha:{best_alpha}, best_beta:{best_beta}")
-    return best_fitness, best_alpha, best_beta
+    best_std = np.fromfile(
+        "C:\\Users\\Johan\\PycharmProjects\\MPCAS_SOCS_Project_BrainNetworkModdeling\\optimization\\slm_best_param.bin",
+        dtype=float)[2]
+
+    print(f"best_fitness:{best_fitness}, best_alpha:{best_alpha}, best_beta:{best_beta}, best_std:{best_std}")
+    return best_fitness, best_alpha, best_beta, best_std
 
 
-def find_best_alpha_beta(individuals, C, true_time_series, alpha_range, beta_range, n_steps=1000, noise_std=1.0):
+def find_best_alpha_beta(individuals, C, true_time_series, alpha_range, beta_range,std_range,  n_steps=1000):
     """
     Grid search over alpha and beta to minimize L1 error with true FC
     """
@@ -59,15 +63,19 @@ def find_best_alpha_beta(individuals, C, true_time_series, alpha_range, beta_ran
     best_fitness = np.fromfile("slm_best_fitness.bin", dtype=float)[0]
     best_alpha = np.fromfile("slm_best_param.bin", dtype=float)[0]
     best_beta = np.fromfile("slm_best_param.bin", dtype=float)[1]
+    best_std = np.fromfile("slm_best_param.bin", dtype=float)[2]
+    FC_emp_list = []
+    for fMRI in true_time_series:
+        FC_emp_list.append(et.compute_fc(fMRI))
 
-    for alpha, beta in product(alpha_range, beta_range):
-        print(f"alpha:{alpha}, beta:{beta}")
+    for alpha, beta, noise_std in product(alpha_range, beta_range, std_range):
+        print(f">>> |alpha:{alpha}| |beta:{beta}| |std{noise_std}|")
         fitness  = 0
         for i in range(individuals):
             u = simulate_linear_model(C[i], alpha, beta, n_steps=n_steps, noise_std=noise_std)
             FC_sim = et.compute_fc(u)
-            pear_sim, p_sim, spear_sim, sp_sim, sc_vals_sim, fc_sim_vals = et.sc_fc_corr(C[i], FC_sim)
-            fitness += pear_sim
+            r_p, p_p, r_s, p_s = et.fc_fc_corr(FC_emp_list[i], FC_sim)
+            fitness += r_p
 
         if fitness > best_fitness:
             best_fitness = fitness
@@ -75,14 +83,15 @@ def find_best_alpha_beta(individuals, C, true_time_series, alpha_range, beta_ran
 
             best_alpha = alpha
             best_beta = beta
-            print(f"New best found! best_fitness:{best_fitness}, alpha:{alpha}, beta:{beta}")
-            np.array([float(alpha), float(beta)]).tofile("slm_best_param.bin")
+            best_std = noise_std
+            print(f"New best found! best_fitness:{best_fitness}, alpha:{alpha}, beta:{beta}, noise_std:{noise_std}")
+            np.array([float(alpha), float(beta), float(noise_std)]).tofile("slm_best_param.bin")
 
-    return best_alpha, best_beta, best_fitness
+    return best_alpha, best_beta, best_std, best_fitness
 
 if __name__ == "__main__":
-    #init_files()
-    get_best()
+    init_files()
+    #get_best()
 
     """
     # --------------------------
@@ -121,11 +130,11 @@ if __name__ == "__main__":
     # Compute average correlations across individuals
     print("\n===== Empirical SC–FC =====")
     print("Pearson:  mean r =", pear_emp, " mean p =", p_emp)
-    print("Spearman: mean r =", spear_emp, " mean p =", sp_emp)
+    print("Spearman_values: mean r =", spear_emp, " mean p =", sp_emp)
 
     print("\n===== Simulated SC–FC =====")
     print("Pearson:  mean r =", pear_sim, " mean p =", p_sim)
-    print("Spearman: mean r =", spear_sim, " mean p =", sp_sim)
+    print("Spearman_values: mean r =", spear_sim, " mean p =", sp_sim)
 
     # ------------------------------------------------------------------
     # Scatterplot: Simulated FC vs Empirical FC

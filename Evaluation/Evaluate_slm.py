@@ -9,8 +9,8 @@ import evaluation_tools as et
 # -------------------------------------------------------------
 # HELPER FUNCTIONS
 # -------------------------------------------------------------
-MODIFIED = True
-fig = False
+MODIFIED = False
+fig = True
 # -------------------------------------------------------------
 # MAIN SCRIPT
 # -------------------------------------------------------------
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     #CHANGE THIS
     ##############
     if MODIFIED:
-        individuals = 10
+        individuals = 100
     else:
         individuals = 100
     ##############
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         m = "SPI"
 
     # Retrieve best parameters for stochastic linear model
-    best_fitness, best_alpha, best_beta = slm.get_best()
+    best_fitness, best_alpha, best_beta, best_std = slm.get_best()
 
     # Initialize arrays for storing results per individual
     pear_emp = np.zeros(individuals)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         # Simulate stochastic linear model (returns timeseries u)
         # shape should be (timepoints, nodes)
         # ------------------------------------------------------------------
-        u = slm.simulate_linear_model(SC, best_alpha, best_beta, n_steps=4800, noise_std=0.1)
+        u = slm.simulate_linear_model(SC, best_alpha, best_beta, n_steps=4800, noise_std=best_std)
 
         # ------------------------------------------------------------------
         # Compute FC: empirical & simulated
@@ -93,18 +93,26 @@ if __name__ == "__main__":
     fc_emp_vals_all /= individuals
     fc_sim_vals_all /= individuals
 
+    pear_emp.tofile(f"Pearson_values/emp.bin")
+    pear_fc.tofile(f"Pearson_values/slm_fc_{m}.bin")
+    pear_sim.tofile(f"Pearson_values/slm_sim_{m}.bin")
+
+    spear_emp.tofile(f"Spearman_values/emp.bin")
+    spear_fc.tofile(f"Spearman_values/slm_fc_{m}.bin")
+    spear_sim.tofile(f"Spearman_values/slm_sim_{m}.bin")
+
     # Compute average correlations across individuals
     print("\n===== Empirical SC–FC =====")
     print("Pearson:  mean r =", pear_emp.mean(), " mean p =", p_emp.mean())
-    print("Spearman: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
+    print("Spearman_values: mean r =", spear_emp.mean(), " mean p =", sp_emp.mean())
 
     print("\n===== Simulated SC–FC =====")
     print("Pearson:  mean r =", pear_sim.mean(), " mean p =", p_sim.mean())
-    print("Spearman: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
+    print("Spearman_values: mean r =", spear_sim.mean(), " mean p =", sp_sim.mean())
 
     print("\n===== SC–SC =====")
     print("Pearson:  mean r =", pear_fc.mean(), " mean p =", p_sim.mean())
-    print("Spearman: mean r =", spear_fc.mean(), " mean p =", sp_sim.mean())
+    print("Spearman_values: mean r =", spear_fc.mean(), " mean p =", sp_sim.mean())
 
     # ------------------------------------------------------------------
     # Scatterplot: Simulated FC vs Empirical FC
@@ -112,11 +120,6 @@ if __name__ == "__main__":
 
     p = pear_fc.mean()
     s = spear_fc.mean()
-
-    print(f"stochastic_pearson_{m}=[")
-    for p in pear_fc:
-        print(f"{p},")
-    print(f"]")
 
 
     if fig:
@@ -130,7 +133,7 @@ if __name__ == "__main__":
         #plt.plot(x, line, 'k--', alpha=0.7)
         plt.text(0.05, 0.95, f"Pearson r = {p:.5f}",
                  transform=plt.gca().transAxes, va='top')
-        plt.text(0.05, 0.90, f"Spearman r = {s:.5f}",
+        plt.text(0.05, 0.90, f"Spearman_values r = {s:.5f}",
                  transform=plt.gca().transAxes, va='top')
         plt.xlabel("Simulated FC")
         plt.ylabel("Empirical FC")
