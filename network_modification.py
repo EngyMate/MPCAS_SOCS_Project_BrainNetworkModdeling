@@ -98,7 +98,7 @@ def rewire_connectome_symmetric(C, coords, n_path_steps):
                 new_C[index[i]][remove[0]] = 0
                 new_C[remove[0]][index[i]] = 0
                 rewired.append([(index[i], remove[0]), (index[i], sp)])
-                remove.pop(0)
+                remove.pop
 
     return new_C, rewired
 
@@ -265,6 +265,13 @@ def show(file=0, file_numbers = 100):
             new_C = np.fromfile(f"data/Modified_DTI/mDTI_individual_{file}.bin").reshape((N, N))
             C = dm.load_DTI_data(file)
 
+            count = np.sum(C>0)
+            count_2 = np.sum(new_C>0)
+            comparison = (new_C != C)
+            plt.close()
+            plt.imshow(comparison, cmap='viridis', interpolation='nearest')
+            plt.show()
+            print(f"count:{count}, count-2:{count_2}")
             # Circular layout
             theta = np.linspace(0, 2 * np.pi, N, endpoint=False)
 

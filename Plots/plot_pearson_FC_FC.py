@@ -45,14 +45,16 @@ def compute_corr_diff_for(tag):
     t_stat_uncorrected, p_value_uncorrected = ttest_rel(slm_pearson_, slm_pearson_SPI)
     print(f"""
     --- {tag.upper()} Summary ---
-    Mean Difference:          {diff.mean():.4f}
+    Mean Difference D:          {diff.mean():.4f}
     t-statistic (uncorrected):{t_stat_uncorrected:.4f}
     p-value (uncorrected):    {p_value_uncorrected:.2e}
-    Standard Deviations:
+    
+    """)
+    """Standard Deviations:
       Series 1 (Pearson):     {slm_pearson_.std():.4f}
       Series 2 (SPI):         {slm_pearson_SPI.std():.4f}
-      Difference (mean_std):  {diff.std():.4f}
-    """)
+      Difference (mean_std):  {diff.std():.4f}"""
+
     plt.xlabel("$I[n]$ Individual")
     plt.ylabel("ρ pearson correlation coefficient")
     plt.title(f"{tag.upper()} Pearson correlation difference")
